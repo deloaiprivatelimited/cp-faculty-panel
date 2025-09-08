@@ -13,12 +13,13 @@ import { useLocation } from "react-router-dom";
 import Sidebar from "./utils/sidebar";
 // import StudentsListPage from "./_Features/Students/Students";
 import StudentList from "./_Features/Students/Students";
+import MyComponent from "./_Features/Students/StudentDesing";
 import StudentDetail from "./_Features/Students/StudentDetail";
 const Layout = ({ children }) => {
   const location = useLocation();
   const path = location.pathname;
 
-  const hideSidebarRoutes = ["/login","/reset-password" , "/students/bulk-upload"];
+  const hideSidebarRoutes = ["/login","/reset-password" ];
   const shouldHideSidebar = hideSidebarRoutes.includes(path);
   const showSidebar = !shouldHideSidebar;
 
@@ -52,14 +53,30 @@ function App() {
             />
 
             <Route
-              path="/dashboard"
+              path="/student/:id"
               element={
                 <ProtectedRoute>
                   <StudentDetail/>
                 </ProtectedRoute>
               }
             />
-            
+             <Route
+              path="/students"
+              element={
+                <ProtectedRoute>
+                  <StudentList/>
+                </ProtectedRoute>
+              }
+            />
+               <Route
+              path="/student-design"
+              element={
+                <ProtectedRoute>
+                  <MyComponent/>
+                </ProtectedRoute>
+              }
+            />
+
 
             {/* Default: redirect root to dashboard */}
             <Route
