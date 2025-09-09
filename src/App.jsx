@@ -12,8 +12,7 @@ import ProtectedRoute from "./_Features/Auth/ProtectedRoute";
 import { useLocation } from "react-router-dom";
 import Sidebar from "./utils/sidebar";
 // import StudentsListPage from "./_Features/Students/Students";
-import StudentList from "./_Features/Students/Students";
-import MyComponent from "./_Features/Students/StudentDesing";
+import StudentList from "./_Features/Students//StudentList";
 import StudentDetail from "./_Features/Students/StudentDetail";
 const Layout = ({ children }) => {
   const location = useLocation();
@@ -53,7 +52,7 @@ function App() {
             />
 
             <Route
-              path="/student/:id"
+              path="/students/:studentId"
               element={
                 <ProtectedRoute>
                   <StudentDetail/>
@@ -65,14 +64,6 @@ function App() {
               element={
                 <ProtectedRoute>
                   <StudentList/>
-                </ProtectedRoute>
-              }
-            />
-               <Route
-              path="/student-design"
-              element={
-                <ProtectedRoute>
-                  <MyComponent/>
                 </ProtectedRoute>
               }
             />
