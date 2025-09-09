@@ -15,6 +15,7 @@ import Sidebar from "./utils/sidebar";
 import StudentList from "./_Features/Students/Students";
 import MyComponent from "./_Features/Students/StudentDesing";
 import StudentDetail from "./_Features/Students/StudentDetail";
+import Test from "./_Features/Test";
 const Layout = ({ children }) => {
   const location = useLocation();
   const path = location.pathname;
@@ -41,6 +42,15 @@ function App() {
         <Layout>
           <Routes>
             <Route path="/login" element={<Login />} />
+ {/* Protected */}
+            <Route
+              path="/test"
+              element={
+                <ProtectedRoute>
+                  <Test />
+                </ProtectedRoute>
+              }
+            />
 
             {/* Protected */}
             <Route
