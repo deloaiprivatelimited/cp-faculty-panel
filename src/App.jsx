@@ -60,7 +60,7 @@ function App() {
               }
             />
              <Route
-              path="/students"
+              path="/"
               element={
                 <ProtectedRoute>
                   <StudentList/>
