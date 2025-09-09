@@ -1,13 +1,23 @@
 // src/components/Sidebar.jsx
 import React from "react";
 import { Users, FileText, Globe, HelpCircle, LogOut } from "lucide-react";
-// import { useAuth } from "../_Features/Auth"; // adjust import path if needed
 import { useAuth } from "../_Features/Auth/AuthContext";
+import { useNavigate, useLocation } from "react-router-dom";
+
 const Sidebar = () => {
   const { logout } = useAuth();
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  // Define your sidebar routes
+  const navItems = [
+    { label: "Students", icon: <Users />, path: "/" },
+    { label: "Test", icon: <FileText />, path: "/test" },
+    { label: "Global", icon: <Globe />, path: "/global" },
+    { label: "My Q's", icon: <HelpCircle />, path: "/myqs" },
+  ];
 
   return (
-    // fixed to left, full height, no scroll inside sidebar
     <aside className="w-20 h-screen fixed left-0 top-0 bg-white shadow-lg flex flex-col items-center py-6 overflow-hidden z-20">
       {/* Logo/Brand */}
       <div className="w-10 h-10 bg-[#4CA466] rounded-lg flex items-center justify-center mb-8">
@@ -16,10 +26,15 @@ const Sidebar = () => {
 
       {/* Navigation Items */}
       <nav className="flex flex-col space-y-6 flex-1">
-        <SidebarItem icon={<Users />} label="Students" active />
-        <SidebarItem icon={<FileText />} label="Test" />
-        <SidebarItem icon={<Globe />} label="Global" />
-        <SidebarItem icon={<HelpCircle />} label="My Q's" />
+        {navItems.map((item) => (
+          <SidebarItem
+            key={item.label}
+            icon={item.icon}
+            label={item.label}
+            active={location.pathname === item.path}
+            onClick={() => navigate(item.path)}
+          />
+        ))}
       </nav>
 
       {/* Logout Button - fixed at bottom */}
