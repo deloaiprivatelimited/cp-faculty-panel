@@ -8,22 +8,43 @@ const CreateTestModal = ({ onClose, onCreate }) => {
     notes: '',
     startDateTime: '',
     endDateTime: '',
-    status: 'upcoming'
   });
 
-  const handleSubmit = (e) => {
-    e.preventDefault();
-    if (!formData.name || !formData.startDateTime || !formData.endDateTime) return;
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
-    onCreate(formData);
-    onClose();
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    setErrorMsg('');
+
+    if (!formData.name || !formData.startDateTime || !formData.endDateTime) {
+      setErrorMsg('Please fill required fields.');
+      return;
+    }
+
+    try {
+      setLoading(true);
+      // Expect parent to return resp.data (e.g. { success: true, message, test })
+      const result = await onCreate(formData);
+
+      const success = result?.success ?? result === true;
+      if (success) {
+        // optionally you can reset form here if you want
+        onClose();
+      } else {
+        setErrorMsg(result?.message || 'Failed to create test. Try again.');
+      }
+    } catch (err) {
+      setErrorMsg('An unexpected error occurred. Please try again.');
+      // console.error(err);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
-    setFormData(prev => ({
-      ...prev,
-      [e.target.name]: e.target.value
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
@@ -34,6 +55,7 @@ const CreateTestModal = ({ onClose, onCreate }) => {
           <button
             onClick={onClose}
             className="text-gray-400 hover:text-gray-600 transition-colors"
+            disabled={loading}
           >
             <X size={24} />
           </button>
@@ -52,6 +74,7 @@ const CreateTestModal = ({ onClose, onCreate }) => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-transparent"
               placeholder="Enter test name"
               required
+              disabled={loading}
             />
           </div>
 
@@ -67,6 +90,7 @@ const CreateTestModal = ({ onClose, onCreate }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-transparent"
                 required
+                disabled={loading}
               />
             </div>
             <div>
@@ -80,6 +104,7 @@ const CreateTestModal = ({ onClose, onCreate }) => {
                 onChange={handleChange}
                 className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-transparent"
                 required
+                disabled={loading}
               />
             </div>
           </div>
@@ -95,6 +120,7 @@ const CreateTestModal = ({ onClose, onCreate }) => {
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-transparent resize-none"
               placeholder="Enter test description"
+              disabled={loading}
             />
           </div>
 
@@ -109,22 +135,27 @@ const CreateTestModal = ({ onClose, onCreate }) => {
               rows={3}
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-transparent resize-none"
               placeholder="Additional notes for students"
+              disabled={loading}
             />
           </div>
+
+          {errorMsg && <div className="text-sm text-red-600">{errorMsg}</div>}
 
           <div className="flex justify-end gap-3 pt-4">
             <button
               type="button"
               onClick={onClose}
               className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
+              disabled={loading}
             >
               Cancel
             </button>
             <button
               type="submit"
-              className="px-4 py-2 bg-[#4CA466] text-white rounded-lg hover:bg-[#3d8a54] transition-colors"
+              className="px-4 py-2 bg-[#4CA466] text-white rounded-lg hover:bg-[#3d8a54] transition-colors disabled:opacity-60"
+              disabled={loading}
             >
-              Create Test
+              {loading ? 'Creating...' : 'Create Test'}
             </button>
           </div>
         </form>

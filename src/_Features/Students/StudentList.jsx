@@ -222,12 +222,20 @@ function MyComponent() {
               </span>
             </p>
           </div>
+            <div className="flex gap-6">
+              <button
+            onClick={() =>window.open(`/students/bulk-upload` , "_blank")}
+            className="bg-[#4CA466] hover:bg-[#3d8a54] text-white px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 shadow-md flex items-center gap-2"
+          >
+            <Plus size={18} />Bulk Upload
+          </button>
           <button
             onClick={() => setShowAddModal(true)}
             className="bg-[#4CA466] hover:bg-[#3d8a54] text-white px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 shadow-md flex items-center gap-2"
           >
             <Plus size={18} /> Add Student
           </button>
+            </div>
         </div>
 
         {/* 🔹 Add Student Modal */}

@@ -1,74 +1,131 @@
-import React, { useState } from 'react';
-import { X } from 'lucide-react';
+import React, { useState } from "react";
+import { X } from "lucide-react";
+import { Editor } from "@tinymce/tinymce-react";
+import { privateAxios } from "../../utils/axios";
+import { showError, showSuccess } from "../../utils/toast";
 
-const EditSectionModal = ({ section, onClose, onSave }) => {
+const EditSectionModal = ({ section = {}, onClose, onSave }) => {
   const [formData, setFormData] = useState({
-    name: section.name,
-    instructions: section.instructions,
-    duration: section.duration,
-    isTimeConstrained: section.isTimeConstrained
+    name: section.name || "",
+    description: section.description || "",
+    instructions: section.instructions || "",
+    duration: section.duration ?? 30,
+    isTimeConstrained: !!section.isTimeConstrained,
   });
+  const [loading, setLoading] = useState(false);
 
-  const handleSubmit = (e) => {
+  const handleSubmit = async (e) => {
     e.preventDefault();
     if (!formData.name.trim()) return;
 
-    onSave({
-      ...section,
-      ...formData
-    });
-    onClose();
+    setLoading(true);
+    try {
+      const payload = {
+        name: formData.name,
+        description: formData.description,
+        instructions: formData.instructions,
+        time_restricted: !!formData.isTimeConstrained,
+      };
+
+      // include duration only when time constrained (optional on backend)
+      if (formData.isTimeConstrained && Number.isFinite(formData.duration)) {
+        payload.duration = formData.duration;
+      }
+
+      const res = await privateAxios.put(`/tests/sections/${section.id || section._id}`, payload);
+      const updated = res.data?.data || res.data;
+      showSuccess("Section updated successfully");
+      if (onSave) onSave(updated);
+      onClose();
+    } catch (err) {
+      console.error("Update section failed", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.response?.data?.error ||
+        err?.message ||
+        "Failed to update section";
+      showError(msg);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e) => {
-    const { name, value, type } = e.target;
-    setFormData(prev => ({
+    const { name, value, type, checked } = e.target;
+    setFormData((prev) => ({
       ...prev,
-      [name]: type === 'checkbox' ? e.target.checked : 
-               type === 'number' ? parseInt(value) : value
+      [name]:
+        type === "checkbox"
+          ? checked
+          : type === "number"
+          ? value === ""
+            ? ""
+            : parseInt(value, 10)
+          : value,
     }));
+  };
+
+  const handleEditorChange = (content) => {
+    setFormData((prev) => ({ ...prev, instructions: content }));
   };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-      <div className="bg-white rounded-xl shadow-xl max-w-md w-full">
+      <div className="bg-white rounded-xl shadow-xl max-w-2xl w-full">
         <div className="flex justify-between items-center p-6 border-b">
           <h2 className="text-xl font-semibold text-gray-900">Edit Section</h2>
-          <button
-            onClick={onClose}
-            className="text-gray-400 hover:text-gray-600 transition-colors"
-          >
+          <button onClick={onClose} className="text-gray-400 hover:text-gray-600" aria-label="Close">
             <X size={24} />
           </button>
         </div>
 
         <form onSubmit={handleSubmit} className="p-6 space-y-4">
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Section Name *
-            </label>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Section Name *</label>
             <input
               type="text"
               name="name"
               value={formData.name}
               onChange={handleChange}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-transparent"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466]"
               placeholder="Enter section name"
               required
             />
           </div>
 
           <div>
-            <label className="block text-sm font-medium text-gray-700 mb-2">
-              Section Instructions
-            </label>
-            <textarea
-              name="instructions"
-              value={formData.instructions}
+            <label className="block text-sm font-medium text-gray-700 mb-2">Description</label>
+            <input
+              name="description"
+              value={formData.description}
               onChange={handleChange}
-              rows={3}
-              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-transparent resize-none"
-              placeholder="Instructions for this section"
+              className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466]"
+              placeholder="Short description (optional)"
+            />
+          </div>
+
+          <div>
+            <label className="block text-sm font-medium text-gray-700 mb-2">Section Instructions</label>
+            <Editor
+              apiKey="3dxds49mb3dhwomdifpyu32irh14nkmz9aj0kjq3s514ytkl"
+              value={formData.instructions}
+              init={{
+                height: 300,
+                menubar: false,
+                plugins: [
+                  "advlist autolink lists link charmap preview anchor",
+                  "searchreplace visualblocks code fullscreen",
+                  "insertdatetime table paste help wordcount",
+                ],
+                toolbar:
+                  "undo redo | formatselect | " +
+                  "bold italic underline | " +
+                  "alignleft aligncenter alignright alignjustify | " +
+                  "bullist numlist outdent indent | " +
+                  "fullscreen | removeformat | help",
+                toolbar_mode: "wrap",
+              }}
+              onEditorChange={handleEditorChange}
             />
           </div>
 
@@ -79,7 +136,7 @@ const EditSectionModal = ({ section, onClose, onSave }) => {
                 name="isTimeConstrained"
                 checked={formData.isTimeConstrained}
                 onChange={handleChange}
-                className="w-4 h-4 text-[#4CA466] border-gray-300 rounded focus:ring-[#4CA466]"
+                className="w-4 h-4 text-[#4CA466] border-gray-300 rounded"
               />
               <span className="text-sm font-medium text-gray-700">Time Constrained Section</span>
             </label>
@@ -87,9 +144,7 @@ const EditSectionModal = ({ section, onClose, onSave }) => {
 
           {formData.isTimeConstrained && (
             <div>
-              <label className="block text-sm font-medium text-gray-700 mb-2">
-                Duration (minutes)
-              </label>
+              <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
               <input
                 type="number"
                 name="duration"
@@ -97,24 +152,17 @@ const EditSectionModal = ({ section, onClose, onSave }) => {
                 onChange={handleChange}
                 min="1"
                 max="300"
-                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-transparent"
+                className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-[#4CA466]"
               />
             </div>
           )}
 
           <div className="flex justify-end gap-3 pt-4">
-            <button
-              type="button"
-              onClick={onClose}
-              className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg hover:bg-gray-200 transition-colors"
-            >
+            <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg">
               Cancel
             </button>
-            <button
-              type="submit"
-              className="px-4 py-2 bg-[#4CA466] text-white rounded-lg hover:bg-[#3d8a54] transition-colors"
-            >
-              Save Changes
+            <button type="submit" disabled={loading} className="px-4 py-2 bg-[#4CA466] text-white rounded-lg">
+              {loading ? "Saving..." : "Save Changes"}
             </button>
           </div>
         </form>

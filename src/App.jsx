@@ -15,18 +15,28 @@ import Sidebar from "./utils/sidebar";
 import StudentList from "./_Features/Students//StudentList";
 import StudentDetail from "./_Features/Students/StudentDetail";
 import Test from "./_Features/Test";
+import TestDetail from "./_Features/Test/TestDetail";
+import MCQPopp from "./_Features/Test/Questions/MCQ/AddQuestion/AddMCQPopUp";
+import EditQuestionBuilder from "./_Features/Test/SectionContent/utils/MCQ/Edit/EditQuestionBuilder";
 const Layout = ({ children }) => {
   const location = useLocation();
   const path = location.pathname;
+  // Exact routes where sidebar should be hidden
+  const hideSidebarRoutes = ["/login", "/reset-password"];
 
-  const hideSidebarRoutes = ["/login","/reset-password" ];
-  const shouldHideSidebar = hideSidebarRoutes.includes(path);
+  // Dynamic routes (patterns) where sidebar should also be hidden
+  const hideSidebarPatterns = [/^\/test\/[^/]+\/testbuilder$/];
+
+  const shouldHideSidebar =
+    hideSidebarRoutes.includes(path) ||
+    hideSidebarPatterns.some((pattern) => pattern.test(path));
+
   const showSidebar = !shouldHideSidebar;
 
   return (
     <div className="flex w-screen h-screen overflow-auto">
       {showSidebar && <Sidebar /> }
-      <div className={`flex-1 ${showSidebar ? "ml-12 p-5 " : "m-0 p-0"} w-full h-full overflow-auto`}>
+      <div className={`flex-1 ${showSidebar ? "ml-12 p-18 " : "m-0 p-0"} w-full h-full overflow-auto`}>
         {children}
       </div>
     </div>
@@ -47,6 +57,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <Test />
+                </ProtectedRoute>
+              }
+            />
+            <Route
+              path="/test/:testId/testbuilder"
+              element={
+                <ProtectedRoute>
+                  <TestDetail />
                 </ProtectedRoute>
               }
             />
@@ -88,7 +106,22 @@ function App() {
                 </ProtectedRoute>
               }
             />
-
+   <Route
+              path="/mcq/popup"
+              element={
+                <ProtectedRoute>
+                  <MCQPopp/>
+                </ProtectedRoute>
+              }
+            />
+              <Route
+              path="/tests/mcq/:id/edit"
+              element={
+                <ProtectedRoute>
+                  <EditQuestionBuilder/>
+                </ProtectedRoute>
+              }
+            />
             {/* catch-all */}
             <Route path="*" element={<Navigate to="/" replace />} />
           </Routes>

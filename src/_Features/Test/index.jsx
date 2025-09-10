@@ -3,6 +3,8 @@ import React, { useState } from 'react';
 // import TestDetail from './TestDetail.js';
 import TestDashboard from './TestDashboard';
 import TestDetail from './TestDetail';
+import { privateAxios } from '../../utils/axios';
+import { showError, showSuccess } from '../../utils/toast';
 function Test() {
   const [currentView, setCurrentView] = useState('dashboard');
   const [selectedTest, setSelectedTest] = useState(null);
@@ -241,15 +243,30 @@ function Test() {
     setCurrentView('dashboard');
     setSelectedTest(null);
   };
+const handleTestCreate = async (newTest) => {
+  try {
+    const resp = await privateAxios.post(`/tests/add`, newTest);
+    if (resp?.data?.success) {
+      showSuccess(resp.data.message || 'Test created successfully');
+    } else {
+      showError(resp?.data?.message || 'Unable to add Test');
+    }
+    // return resp.data so modal can check success/message
+    return resp.data;
+  } catch (err) {
+    if (err.response) {
+      showError(err.response.data?.message || 'Unable to add Test, Try Later');
+      return { success: false, message: err.response.data?.message || 'Server error' };
+    } else if (err.request) {
+      showError('No response received from server.');
+      return { success: false, message: 'No response from server' };
+    } else {
+      showError('Error setting up request: ' + err.message);
+      return { success: false, message: err.message };
+    }
+  }
+};
 
-  const handleTestCreate = (newTest) => {
-    const test = {
-      ...newTest,
-      id: Date.now().toString(),
-      sections: []
-    };
-    setTests(prev => [...prev, test]);
-  };
 
   const handleTestUpdate = (updatedTest) => {
     setTests(prev => prev.map(test => test.id === updatedTest.id ? updatedTest : test));
