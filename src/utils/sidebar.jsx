@@ -4,31 +4,20 @@ import { Users, FileText, Globe, HelpCircle, LogOut } from "lucide-react";
 import { useAuth } from "../_Features/Auth/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
+import { useNavigate, useLocation } from "react-router-dom";
+
 const Sidebar = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
-  const path = location.pathname || "/";
 
-  // Helper to determine active state. For Students we want to be active
-  // for /students and any nested route like /students/:studentId
-  const isActive = (base) => {
-    if (base === "/students") {
-      return path === "/students" || path.startsWith("/students/") || path=== "/";
-    }
-    return path === base;
-  };
-
-  const handleLogout = async () => {
-    try {
-      await logout();
-    } catch (err) {
-      // you can toast/log error if you want
-      console.error("Logout error:", err);
-    } finally {
-      navigate("/login");
-    }
-  };
+  // Define your sidebar routes
+  const navItems = [
+    { label: "Students", icon: <Users />, path: "/" },
+    { label: "Test", icon: <FileText />, path: "/test" },
+    { label: "Global", icon: <Globe />, path: "/global" },
+    { label: "My Q's", icon: <HelpCircle />, path: "/myqs" },
+  ];
 
   return (
     <aside className="w-20 h-screen fixed left-0 top-0 bg-white shadow-lg flex flex-col items-center py-6 overflow-hidden z-20">
@@ -39,30 +28,15 @@ const Sidebar = () => {
 
       {/* Navigation Items */}
       <nav className="flex flex-col space-y-6 flex-1">
-        <SidebarItem
-          icon={<Users />}
-          label="Students"
-          active={isActive("/students")}
-          onClick={() => navigate("/")}
-        />
-        <SidebarItem
-          icon={<FileText />}
-          label="Test"
-          active={isActive("/test")}
-          onClick={() => navigate("/test")}
-        />
-        <SidebarItem
-          icon={<Globe />}
-          label="Global"
-          active={isActive("/global")}
-          onClick={() => navigate("/global")}
-        />
-        <SidebarItem
-          icon={<HelpCircle />}
-          label="My Q's"
-          active={isActive("/my-questions")}
-          onClick={() => navigate("/my-questions")}
-        />
+        {navItems.map((item) => (
+          <SidebarItem
+            key={item.label}
+            icon={item.icon}
+            label={item.label}
+            active={location.pathname === item.path}
+            onClick={() => navigate(item.path)}
+          />
+        ))}
       </nav>
 
       {/* Logout Button - fixed at bottom */}

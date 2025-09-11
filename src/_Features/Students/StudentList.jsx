@@ -49,7 +49,7 @@ function MyComponent() {
   const navigate = useNavigate();
   const [totalPages, setTotalPages] = useState(1);
 
-    // 🔹 Handle filter checkbox
+  // 🔹 Handle filter checkbox
   const handleCheckboxChange = (category, value) => {
     setFilters((prev) => ({
       ...prev,
@@ -748,7 +748,6 @@ function MyComponent() {
                           }`}
                         >
                           {student.is_active ? "Active" : "Inactive"}
-
                         </span>
                       </td>
                       <td className="px-6 py-4">
@@ -785,10 +784,7 @@ function MyComponent() {
                 onChange={(e) =>
                   setFilters((prev) => ({
                     ...prev,
-                    limit:
-                      e.target.value === "All"
-                        ? Number(totalStudents)
-                        : Number(e.target.value),
+                    limit: e.target.value, // store as string: "10", "20", "All"
                     page: 1,
                   }))
                 }
@@ -814,7 +810,7 @@ function MyComponent() {
                     page: Math.max(1, prev.page - 1),
                   }))
                 }
-                className={`px-2 py-1 rounded-md border ${
+                className={`flex items-center justify-center w-8 h-8 rounded-md border ${
                   filters.page === 1
                     ? "text-gray-400 border-gray-200 cursor-not-allowed"
                     : "text-[#4CA466] border-[#4CA466] hover:bg-[#4CA466] hover:text-white"
@@ -825,46 +821,43 @@ function MyComponent() {
 
               {/* Page Numbers */}
               {(() => {
-                const totalPages = filters.total_pages || 1;
                 const currentPage = filters.page || 1;
                 const pages = [];
 
-                if (totalPages <= 5) {
-                  for (let i = 1; i <= totalPages; i++) pages.push(i);
-                } else {
-                  if (currentPage <= 3) {
-                    pages.push(1, 2, 3, "...", totalPages);
-                  } else if (currentPage >= totalPages - 2) {
-                    pages.push(
-                      1,
-                      "...",
-                      totalPages - 2,
-                      totalPages - 1,
-                      totalPages
-                    );
-                  } else {
-                    pages.push(
-                      1,
-                      "...",
-                      currentPage - 1,
-                      currentPage,
-                      currentPage + 1,
-                      "...",
-                      totalPages
-                    );
-                  }
-                }
+                // Always show first page
+                if (currentPage > 2) pages.push(1);
+
+                // Add ... if gap exists
+                if (currentPage > 3) pages.push("...");
+
+                // Previous page
+                if (currentPage > 1) pages.push(currentPage - 1);
+
+                // Current page
+                pages.push(currentPage);
+
+                // Next page
+                if (currentPage < totalPages) pages.push(currentPage + 1);
+
+                // Add ... if gap exists
+                if (currentPage + 2 < totalPages) pages.push("...");
+
+                // Always show last page if more than 1 page
+                if (currentPage + 1 < totalPages) pages.push(totalPages);
 
                 return pages.map((page, idx) =>
                   page === "..." ? (
-                    <span key={idx} className="px-2 text-gray-500">
+                    <span
+                      key={idx}
+                      className="flex items-center justify-center w-8 h-8 text-gray-500"
+                    >
                       ...
                     </span>
                   ) : (
                     <button
                       key={idx}
                       onClick={() => setFilters((prev) => ({ ...prev, page }))}
-                      className={`px-3 py-1 rounded-md border ${
+                      className={`flex items-center justify-center w-8 h-8 rounded-md border ${
                         currentPage === page
                           ? "bg-[#4CA466] text-white border-[#4CA466]"
                           : "text-[#4CA466] border-[#4CA466] hover:bg-[#4CA466] hover:text-white"
@@ -882,6 +875,11 @@ function MyComponent() {
                 onClick={() =>
                   setFilters((prev) => ({ ...prev, page: prev.page + 1 }))
                 }
+                className={`flex items-center justify-center w-8 h-8 rounded-md border ${
+                  filters.page >= totalPages
+                    ? "text-gray-400 border-gray-200 cursor-not-allowed"
+                    : "text-[#4CA466] border-[#4CA466] hover:bg-[#4CA466] hover:text-white"
+                }`}
               >
                 <ChevronRight size={16} />
               </button>
