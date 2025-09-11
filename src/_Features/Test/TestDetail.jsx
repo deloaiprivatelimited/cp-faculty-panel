@@ -206,7 +206,7 @@ const TestDetail = ({
   return (
     <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b flex-shrink-0">
+      <header className="bg-white shadow-sm  flex-shrink-0">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -242,7 +242,7 @@ const TestDetail = ({
 
       <div className="flex-1 flex overflow-hidden">
         {/* Fixed Sidebar */}
-        <div className="w-80 bg-white border-r flex-shrink-0 flex flex-col h-full">
+        <div className="w-80 bg-white  flex-shrink-0 flex flex-col h-full">
           <div className="flex-1 min-h-0">
             <SectionSidebar
               // pass server-fetched lists separately
@@ -258,7 +258,7 @@ const TestDetail = ({
               error={sectionsError}
             />
           </div>
-          <div className="flex-shrink-0 p-4 border-t">
+          <div className="flex-shrink-0 p-4">
             <button
               onClick={() => setIsAddSectionModalOpen(true)}
               className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#4CA466] text-white rounded-lg hover:bg-[#3d8a54] transition-colors"
