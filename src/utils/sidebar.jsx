@@ -4,12 +4,17 @@ import { Users, FileText, Globe, HelpCircle, LogOut } from "lucide-react";
 import { useAuth } from "../_Features/Auth/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
-import { useNavigate, useLocation } from "react-router-dom";
 
 const Sidebar = () => {
   const { logout } = useAuth();
   const navigate = useNavigate();
   const location = useLocation();
+
+  // Define logout handler
+  const handleLogout = () => {
+    logout();           // clears auth context/session
+    navigate("/login"); // redirect to login page
+  };
 
   // Define your sidebar routes
   const navItems = [

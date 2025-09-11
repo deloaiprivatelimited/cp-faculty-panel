@@ -204,9 +204,9 @@ const TestDetail = ({
   const assignedCount = (assignedStudents && assignedStudents.length) || 0;
 
   return (
-    <div className="min-h-screen bg-gray-50 flex flex-col">
+    <div className="h-screen bg-gray-50 flex flex-col overflow-hidden">
       {/* Header */}
-      <header className="bg-white shadow-sm border-b">
+      <header className="bg-white shadow-sm border-b flex-shrink-0">
         <div className="px-6 py-4">
           <div className="flex items-center justify-between">
             <div className="flex items-center">
@@ -240,27 +240,39 @@ const TestDetail = ({
         </div>
       </header>
 
-      <div className="flex-1 flex">
-        {/* Sidebar */}
-        <div className="w-80 bg-white border-r">
-          <SectionSidebar
-            // pass server-fetched lists separately
-            timedSections={sectionsTimeRestricted}
-            openSections={sectionsOpen}
-            // combined list for any consumer that expects 'sections'
-            sections={combinedServerSections.length ? combinedServerSections : (test.sections || [])}
-            selectedSection={selectedSection}
-            onSectionSelect={handleSectionSelect}
-            onSectionEdit={handleEditSection}
-            onAdd={() => setIsAddSectionModalOpen(true)}
-            loading={loadingSections}
-            error={sectionsError}
-          />
+      <div className="flex-1 flex overflow-hidden">
+        {/* Fixed Sidebar */}
+        <div className="w-80 bg-white border-r flex-shrink-0 flex flex-col h-full">
+          <div className="flex-1 min-h-0">
+            <SectionSidebar
+              // pass server-fetched lists separately
+              timedSections={sectionsTimeRestricted}
+              openSections={sectionsOpen}
+              // combined list for any consumer that expects 'sections'
+              sections={combinedServerSections.length ? combinedServerSections : (test.sections || [])}
+              selectedSection={selectedSection}
+              onSectionSelect={handleSectionSelect}
+              onSectionEdit={handleEditSection}
+              onAdd={() => setIsAddSectionModalOpen(true)}
+              loading={loadingSections}
+              error={sectionsError}
+            />
+          </div>
+          <div className="flex-shrink-0 p-4 border-t">
+            <button
+              onClick={() => setIsAddSectionModalOpen(true)}
+              className="w-full flex items-center justify-center gap-2 px-4 py-2 bg-[#4CA466] text-white rounded-lg hover:bg-[#3d8a54] transition-colors"
+            >
+              <Plus size={18} />
+              Add Section
+            </button>
+          </div>
         </div>
 
-      <div className="flex-1">
-  <SelectedSectionView section={selectedSection} />
-</div>
+        {/* Scrollable Content Area */}
+        <div className="flex-1 overflow-auto">
+          <SelectedSectionView section={selectedSection} />
+        </div>
       </div>
 
       {/* Modals */}
