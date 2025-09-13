@@ -22,7 +22,7 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const path = location.pathname;
   // Exact routes where sidebar should be hidden
-  const hideSidebarRoutes = ["/login", "/reset-password"];
+  const hideSidebarRoutes = ["/login", "/reset-password",];
 
   // Dynamic routes (patterns) where sidebar should also be hidden
   const hideSidebarPatterns = [/^\/test\/[^/]+\/testbuilder$/];
