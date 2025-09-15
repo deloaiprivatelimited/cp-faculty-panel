@@ -5,6 +5,8 @@ import TestCard from "./TestCard.jsx";
 import CreateTestModal from "./CreateTestModal.jsx";
 import { privateAxios } from "../../utils/axios"; // adjust path if different
 import { useNavigate } from "react-router-dom";
+import EditTestModal from "./EditTestModal.jsx"; // add this import
+import { Edit } from "lucide-react"; // optional if you want elsewhere
 
 const TAB_CONFIG = {
   all: { label: "All", endpoint: "/tests", defaultSort: "-start_datetime", icon: BookOpen },
@@ -22,15 +24,62 @@ export default function TestDashboard({
   onTestSelect,
   onTestCreate, // called after successful creation (optional)
 }) {
-  const [activeTab, setActiveTab] = useState("upcoming");
+  const [activeTab, setActiveTab] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // server-driven state
   const [tests, setTests] = useState(initialTests);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
+ // Edit modal state
+  const [editingTest, setEditingTest] = useState(null);
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false);
+  const [updating, setUpdating] = useState(false);
   // pagination & search state
+ 
+  // open edit modal for a test
+  const handleOpenEdit = (test) => {
+    setEditingTest(test);
+    setIsEditModalOpen(true);
+  };
+
+  // close edit modal
+  const handleCloseEdit = () => {
+    setEditingTest(null);
+    setIsEditModalOpen(false);
+  };
+ // Perform update (used by EditTestModal)
+  const handleUpdate = async (testId, payload) => {
+    setUpdating(true);
+    try {
+      if (typeof onTestCreate === "function" && false) {
+        // dummy placeholder: prefer direct axios
+      }
+      // Parent may provide onTestUpdate; if not, do PUT directly
+      if (typeof window !== "undefined" && typeof privateAxios !== "undefined") {
+        const res = await privateAxios.put(`/tests/${testId}`, payload);
+        // You may want to handle response shape; return to modal
+        // After successful update, refresh current page
+        setPage(1); // reset to first page, or keep current
+        // small delay and then refetch (your fetch effect will run because page changed)
+        setTimeout(() => {
+          setPage((p) => p); // trigger effect — keeps page same but safe
+        }, 150);
+        return res.data;
+      } else {
+        // fallback: if parent provided custom update handler, call it
+        if (typeof onTestCreate === "function") {
+          return await onTestCreate(payload);
+        }
+      }
+    } catch (err) {
+      console.error("Error updating test:", err);
+      // bubble error to modal caller
+      throw err;
+    } finally {
+      setUpdating(false);
+    }
+  };
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const [totalPages, setTotalPages] = useState(1);
@@ -89,6 +138,7 @@ export default function TestDashboard({
         const data = res.data?.data || {};
         const fetchedTests = data.tests || [];
         const meta = data.meta || {};
+        console.log(fetchedTests)
 
         setTests(fetchedTests);
         setTotalCount(meta.total ?? 0);
@@ -269,6 +319,8 @@ export default function TestDashboard({
                     test={test}
                     assignedStudentCount={testAssignments[test.id]?.length || 0}
     onClick={() => window.open(`/test/${test.id}/testbuilder`, "_blank")}
+                    onEdit={(t) => handleOpenEdit(t)}
+
                   />
                 ))
               )}
@@ -347,6 +399,34 @@ export default function TestDashboard({
           onCreate={handleCreate}
         />
       )}
+            {/* Edit Test Modal */}
+      {isEditModalOpen && editingTest && (
+        <EditTestModal
+          test={editingTest}
+          onClose={handleCloseEdit}
+          onUpdate={async (testId, payload) => {
+            // This will be invoked from modal. We call the handleUpdate above.
+            try {
+              const res = await handleUpdate(testId, payload);
+              // close only on success
+              handleCloseEdit();
+              // re-fetch tests by forcing page reset (the fetch effect will run)
+              setPage(1);
+              return res?.data ? res.data : { success: true };
+            } catch (err) {
+              // return err-like object so modal shows message
+              return {
+                success: false,
+                message:
+                  err?.response?.data?.message ??
+                  err?.message ??
+                  "Failed to update test",
+              };
+            }
+          }}
+        />
+      )}
+
     </div>
   );
 }

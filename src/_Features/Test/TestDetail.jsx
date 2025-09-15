@@ -7,7 +7,7 @@ import AddSectionModal from './AddSectionModal.jsx';
 import EditSectionModal from './EditSectionModal.jsx';
 import EditTestModal from './EditTestModal.jsx';
 import AssignStudentsModal from './AssignStudentsModal.jsx';
-import SelectedSectionView from './SectionContent/selectedSectionView.jsx';
+import SelectedSectionView from './SectionContent/selectedSectionView.tsx';
 import { useParams } from 'react-router-dom';
 // import { privateAxios } from '../../utils/axios'; // adjust path if needed
 import { privateAxios } from '../../utils/axios.js';

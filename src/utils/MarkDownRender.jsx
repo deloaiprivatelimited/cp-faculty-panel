@@ -4,7 +4,7 @@ import PropTypes from "prop-types";
 import { marked } from "marked";
 import DOMPurify from "dompurify";
 import markedKatex from "marked-katex-extension";
-
+import './markdownoverride.css'
 import "github-markdown-css/github-markdown-light.css";
 
 /**
