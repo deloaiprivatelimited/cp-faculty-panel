@@ -12,6 +12,7 @@ import ProtectedRoute from "./_Features/Auth/ProtectedRoute";
 import { useLocation } from "react-router-dom";
 // import Sidebar from "./utils/sidebar";
 import Sidebar from "./utils/sidebar.tsx";
+import TestDashboard from "./_Features/Test/TestDashboard.jsx";
 // import StudentsListPage from "./_Features/Students/Students";
 import StudentList from "./_Features/Students//StudentList";
 import StudentDetail from "./_Features/Students/StudentDetail";
@@ -98,7 +99,7 @@ function App() {
               path="/test"
               element={
                 <ProtectedRoute>
-                  <Test />
+                  <TestDashboard />
                 </ProtectedRoute>
               }
             />

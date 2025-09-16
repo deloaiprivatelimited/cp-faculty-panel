@@ -2,10 +2,10 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { Plus, Calendar, Clock, BookOpen, ChevronLeft, ChevronRight } from "lucide-react";
 import TestCard from "./TestCard.jsx";
-import CreateTestModal from "./CreateTestModal.jsx";
+import CreateTestModal from "./CreateTestModal.tsx";
 import { privateAxios } from "../../utils/axios"; // adjust path if different
 import { useNavigate } from "react-router-dom";
-import EditTestModal from "./EditTestModal.jsx"; // add this import
+import EditTestModal from "./EditTestModal.tsx"; // add this import
 import { Edit } from "lucide-react"; // optional if you want elsewhere
 
 const TAB_CONFIG = {
@@ -18,17 +18,14 @@ const TAB_CONFIG = {
 const DEFAULT_PER_PAGE = 12;
 
 export default function TestDashboard({
-  tests: initialTests = [], // optional initial server-side data
-  students,
-  testAssignments = {},
-  onTestSelect,
-  onTestCreate, // called after successful creation (optional)
+  
+  
 }) {
   const [activeTab, setActiveTab] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
   // server-driven state
-  const [tests, setTests] = useState(initialTests);
+  const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
  // Edit modal state
@@ -39,6 +36,7 @@ export default function TestDashboard({
  
   // open edit modal for a test
   const handleOpenEdit = (test) => {
+    console.log(test)
     setEditingTest(test);
     setIsEditModalOpen(true);
   };
@@ -52,11 +50,8 @@ export default function TestDashboard({
   const handleUpdate = async (testId, payload) => {
     setUpdating(true);
     try {
-      if (typeof onTestCreate === "function" && false) {
-        // dummy placeholder: prefer direct axios
-      }
+    
       // Parent may provide onTestUpdate; if not, do PUT directly
-      if (typeof window !== "undefined" && typeof privateAxios !== "undefined") {
         const res = await privateAxios.put(`/tests/${testId}`, payload);
         // You may want to handle response shape; return to modal
         // After successful update, refresh current page
@@ -66,12 +61,7 @@ export default function TestDashboard({
           setPage((p) => p); // trigger effect — keeps page same but safe
         }, 150);
         return res.data;
-      } else {
-        // fallback: if parent provided custom update handler, call it
-        if (typeof onTestCreate === "function") {
-          return await onTestCreate(payload);
-        }
-      }
+      
     } catch (err) {
       console.error("Error updating test:", err);
       // bubble error to modal caller
@@ -112,12 +102,7 @@ export default function TestDashboard({
     setPage(1);
     setError(null);
   }, [activeTab, debouncedQ, perPage]);
-
-  // core fetch logic
-  useEffect(() => {
-    let cancelled = false;
-
-    async function fetchTests() {
+ async function fetchTests() {
       setLoading(true);
       setError(null);
 
@@ -133,7 +118,6 @@ export default function TestDashboard({
       try {
         const res = await privateAxios.get(endpoint, { params });
         // expected shape: { success, message, data: { tests: [...], meta: { total, page, per_page, total_pages } } }
-        if (cancelled) return;
 
         const data = res.data?.data || {};
         const fetchedTests = data.tests || [];
@@ -151,10 +135,15 @@ export default function TestDashboard({
             "Unable to fetch tests. Please try again."
         );
       } finally {
-        if (!cancelled) setLoading(false);
+       setLoading(false);
       }
     }
 
+  // core fetch logic
+  useEffect(() => {
+    let cancelled = false;
+
+   
     fetchTests();
     return () => {
       cancelled = true;
@@ -164,12 +153,10 @@ export default function TestDashboard({
   // handle create -> close modal -> refetch
   const handleCreate = async (payload) => {
     try {
-      if (onTestCreate) {
-        await onTestCreate(payload);
-      } else {
+      
         // fallback: POST directly if parent didn't provide handler
         await privateAxios.post("/tests/add", payload);
-      }
+    
       setIsCreateModalOpen(false);
       // refresh
       setPage(1);
@@ -179,6 +166,7 @@ export default function TestDashboard({
       setTimeout(() => {
         // force a re-fetch: ensure page set
         setPage(1);
+        fetchTests()
       }, 200);
     } catch (err) {
       console.error("Error creating test:", err);
@@ -317,7 +305,7 @@ export default function TestDashboard({
                   <TestCard
                     key={test.id}
                     test={test}
-                    assignedStudentCount={testAssignments[test.id]?.length || 0}
+                    assignedStudentCount= {0}
     onClick={() => window.open(`/test/${test.id}/testbuilder`, "_blank")}
                     onEdit={(t) => handleOpenEdit(t)}
 
