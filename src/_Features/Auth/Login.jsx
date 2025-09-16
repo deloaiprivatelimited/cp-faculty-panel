@@ -35,7 +35,7 @@ function Login() {
       if (admin?.is_first_login === true) {
         navigate("/reset-password", { replace: true });
       } else {
-        navigate("/dashboard", { replace: true });
+        navigate("/students", { replace: true });
       }
     } catch (err) {
             console.log(err);
