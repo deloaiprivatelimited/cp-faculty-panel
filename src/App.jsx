@@ -35,7 +35,7 @@ const Layout = ({ children }) => {
   const location = useLocation();
   const path = location.pathname;
   // Exact routes where sidebar should be hidden
-  const hideSidebarRoutes = ["/login", "/reset-password"];
+  const hideSidebarRoutes = ["/login", "/reset-password",];
 
   // Dynamic routes (patterns) where sidebar should also be hidden
   const hideSidebarPatterns = [
@@ -53,7 +53,7 @@ const Layout = ({ children }) => {
   return (
     <div className="flex w-screen h-screen overflow-auto">
       {showSidebar && <Sidebar /> }
-      <div className={`flex-1 ${showSidebar ? "ml-12 p-18 " : "m-0 p-0"} w-full h-full overflow-auto`}>
+      <div className={`flex-1 ${showSidebar ? "ml-12  " : "m-0 p-0"} w-full h-full overflow-auto`}>
         {children}
       </div>
     </div>

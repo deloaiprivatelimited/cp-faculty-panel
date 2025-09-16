@@ -52,7 +52,7 @@ function Login() {
   };
 
   return (
-    <div className="min-h-screen flex">
+    <div className="max-h-screen flex">
       {/* Left Side - Image */}
       <div className="hidden lg:flex lg:w-1/2 relative">
         <img
@@ -60,26 +60,26 @@ function Login() {
           alt="Professional workspace"
           className="absolute inset-0 w-full h-full object-cover"
         />
-        <div className="absolute inset-0 bg-black bg-opacity-20"></div>
+        <div className="absolute inset-0 bg-black/50 bg-opacity-20"></div>
         <div className="relative z-10 flex items-end p-12">
           <div className="text-white">
-            <h2 className="text-3xl font-bold mb-4">Welcome to CareerPRerp</h2>
+            <h2 className="text-3xl font-bold mb-2">Welcome to <span className='text-green-500'>CareerPrep</span></h2>
             <p className="text-lg opacity-90">Professional career management made simple</p>
           </div>
         </div>
       </div>
 
       {/* Right Side - Login Form */}
-      <div className="w-full lg:w-1/2 flex items-center justify-center p-8 bg-white">
-        <div className="max-w-md w-full space-y-8">
+      <div className="w-full max-h-screen lg:w-1/2 flex items-center justify-center p-8 bg-white">
+        <div className="max-w-md w-full h-screen flex flex-col justify-center ">
           {/* Header */}
           <div className="text-center">
-            <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center mb-6" style={{ backgroundColor: '#4CA466' }}>
+            <div className="mx-auto w-16 h-16 rounded-full flex items-center justify-center" style={{ backgroundColor: '#4CA466' }}>
               <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                 <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-4m-5 0H9m0 0H7m2 0v-5a2 2 0 012-2h2a2 2 0 012 2v5m-4 0h4" />
               </svg>
             </div>
-            <h1 className="text-3xl font-bold text-gray-900">CareerPRerp</h1>
+            <h1 className="text-3xl font-bold text-gray-900">CareerPrep</h1>
             <h2 className="text-xl font-semibold text-gray-700 mt-2">Admin Panel</h2>
             <p className="mt-4 text-gray-600">Sign in to access your dashboard</p>
           </div>
@@ -141,14 +141,14 @@ function Login() {
           </form>
 
           {/* Contact Admin Section */}
-          <div className="text-center pt-6 border-t border-gray-200">
-            <p className="text-sm text-gray-600 leading-relaxed">
+          <div className="text-center border-t border-gray-200">
+            <p className="text-sm  mt-2 text-gray-600 leading-relaxed">
               Need to signup or forgot password?<br />
               <span className="font-medium">Contact admin</span>
             </p>
             <a
               href="mailto:contact@deloai.com"
-              className="inline-block mt-2 px-4 py-2 text-sm font-medium rounded-lg transition duration-200 hover:bg-gray-50"
+              className="inline-block px-4 py-2 text-sm font-medium rounded-lg transition duration-200 hover:bg-gray-50"
               style={{ color: '#4CA466' }}
             >
               contact@deloai.com
@@ -156,13 +156,13 @@ function Login() {
           </div>
 
           {/* Mobile Image Preview */}
-          <div className="lg:hidden mt-8 rounded-lg overflow-hidden shadow-lg">
+          {/* <div className="lg:hidden mt-8 rounded-lg overflow-hidden shadow-lg">
             <img
               src="https://images.pexels.com/photos/3184291/pexels-photo-3184291.jpeg?auto=compress&cs=tinysrgb&w=800&h=400&dpr=2"
               alt="Professional workspace"
               className="w-full h-32 object-cover"
             />
-          </div>
+          </div> */}
         </div>
       </div>
     </div>
