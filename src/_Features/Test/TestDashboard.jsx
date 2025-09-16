@@ -182,10 +182,11 @@ export default function TestDashboard({
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50">
-      {/* Header */}
+      {/* Combined Header with Tabs */}
       <header className="bg-white/90 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-40">
         <div className="max-w-7xl mx-auto px-6 py-6">
-          <div className="flex justify-between items-center">
+          {/* Top Section - Title, Search, Create Button */}
+          <div className="flex justify-between items-center mb-6">
             <div>
               <h1 className="text-3xl font-bold text-gray-900 mb-1">Test Management</h1>
               <p className="text-gray-600 text-sm">Create, manage, and monitor your tests</p>
@@ -229,13 +230,9 @@ export default function TestDashboard({
               </button>
             </div>
           </div>
-        </div>
-      </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
-        {/* Enhanced Tabs */}
-        <div className="mb-8">
-          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-2 shadow-lg border border-gray-200/50">
+          {/* Bottom Section - Navigation Tabs */}
+          <div className="bg-white/60 backdrop-blur-sm rounded-2xl p-2 border border-gray-200/50">
             <nav className="flex space-x-1">
               {tabs.map(({ key, label, Icon }) => (
                 <button
@@ -268,7 +265,9 @@ export default function TestDashboard({
             </nav>
           </div>
         </div>
+      </header>
 
+      <div className="max-w-7xl mx-auto px-6 py-8">
         {/* Content */}
         <div>
           {/* Enhanced Controls */}
