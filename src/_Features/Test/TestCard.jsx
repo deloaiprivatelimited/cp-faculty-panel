@@ -1,5 +1,5 @@
 import React from "react";
-import { Calendar, Clock, FileText, Users ,Edit} from "lucide-react";
+import { Calendar, Clock, FileText, Users, Edit } from "lucide-react";
 
 /**
  * TestCard
@@ -11,11 +11,11 @@ import { Calendar, Clock, FileText, Users ,Edit} from "lucide-react";
  *  - onClick: function
  *
  * Behavior:
- *  - Shows separate start date/time and end date/time (Asia/Kolkata)
+ *  - Shows separate start date/time and end date/time in 12-hour format
  *  - Shows duration (prefers duration_seconds from backend; falls back to end-start)
  *  - Shows number of sections (prefer total_sections, else sum of time_restricted/open, else sections.length)
  */
-const TestCard = ({ test = {}, assignedStudentCount = 0, onClick,onEdit }) => {
+const TestCard = ({ test = {}, assignedStudentCount = 0, onClick, onEdit }) => {
   // safe destructuring with sensible defaults
   const {
     id = "",
@@ -26,7 +26,7 @@ const TestCard = ({ test = {}, assignedStudentCount = 0, onClick,onEdit }) => {
     end_datetime,
     status: providedStatus = null,
     sections = [],
-    total_sections = null, // backend may send this
+    total_sections = null,
     sections_time_restricted = null,
     sections_open = null,
     duration_seconds: backend_duration_seconds = null,
@@ -35,12 +35,17 @@ const TestCard = ({ test = {}, assignedStudentCount = 0, onClick,onEdit }) => {
   // trim stray whitespace in test name
   const title = (test_name || "").toString().trim();
 
-  // helper to format date/time in Asia/Kolkata
+  // helper to format date/time in 12-hour format
   const formatDateTime = (dateTime) => {
     if (!dateTime) return { date: "N/A", time: "N/A", iso: null, epoch: null };
     const date = new Date(dateTime);
     const optionsDate = { year: "numeric", month: "short", day: "2-digit", timeZone: "Asia/Kolkata" };
-    const optionsTime = { hour: "2-digit", minute: "2-digit", second: "2-digit", timeZone: "Asia/Kolkata", hour12: false };
+    const optionsTime = { 
+      hour: "2-digit", 
+      minute: "2-digit", 
+      timeZone: "Asia/Kolkata", 
+      hour12: true 
+    };
     return {
       date: date.toLocaleDateString("en-GB", optionsDate),
       time: date.toLocaleTimeString("en-GB", optionsTime),
@@ -66,13 +71,13 @@ const TestCard = ({ test = {}, assignedStudentCount = 0, onClick,onEdit }) => {
   }
 
   const statusColors = {
-    upcoming: "bg-blue-100 text-blue-800",
-    ongoing: "bg-green-100 text-green-800",
-    past: "bg-gray-100 text-gray-800",
-    unknown: "bg-yellow-100 text-yellow-800",
+    upcoming: "bg-blue-50 text-blue-700 border-blue-200",
+    ongoing: "bg-emerald-50 text-emerald-700 border-emerald-200",
+    past: "bg-red-50 text-red-600 border-red-200",
+    unknown: "bg-amber-50 text-amber-700 border-amber-200",
   };
 
-  // sections count: prefer explicit total_sections, then sum of time_restricted/open if present, then sections.length
+  // sections count
   const sectionsCount = (() => {
     if (Number.isFinite(total_sections) && total_sections !== null) return total_sections;
     const trCount = Array.isArray(sections_time_restricted) ? sections_time_restricted.length
@@ -81,13 +86,10 @@ const TestCard = ({ test = {}, assignedStudentCount = 0, onClick,onEdit }) => {
                    : typeof sections_open === "number" ? sections_open : 0;
     if (trCount || openCount) return trCount + openCount;
     if (Array.isArray(sections)) return sections.length;
-    // fallback to 0
     return 0;
   })();
 
-  // compute duration to display:
-  // - prefer backend_duration_seconds (explicit from frontend)
-  // - else, if start & end available and end > start, compute derived value (for display only)
+  // compute duration
   const derivedDurationSeconds = (startFormatted.epoch && endFormatted.epoch && endFormatted.epoch > startFormatted.epoch)
     ? Math.round((endFormatted.epoch - startFormatted.epoch) / 1000)
     : null;
@@ -97,12 +99,12 @@ const TestCard = ({ test = {}, assignedStudentCount = 0, onClick,onEdit }) => {
   const humanizeDuration = (seconds) => {
     if (seconds == null || Number.isNaN(seconds)) return "—";
     const s = Math.max(0, Math.round(Number(seconds)));
-    if (s < 60) return `${s} sec`;
+    if (s < 60) return `${s}s`;
     const mins = Math.floor(s / 60);
-    if (mins < 60) return `${mins} min`;
+    if (mins < 60) return `${mins}m`;
     const hours = Math.floor(mins / 60);
     const minutes = mins % 60;
-    return minutes === 0 ? `${hours} hr${hours > 1 ? "s" : ""}` : `${hours} hr ${minutes} min`;
+    return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
   };
 
   const durationReadable = humanizeDuration(durationSeconds);
@@ -110,108 +112,112 @@ const TestCard = ({ test = {}, assignedStudentCount = 0, onClick,onEdit }) => {
   return (
     <div
       onClick={onClick}
-      className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 cursor-pointer hover:shadow-md hover:border-[#4CA466] transition-all duration-200 group"
+      className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-lg hover:border-emerald-300 transition-all duration-300 group relative overflow-hidden"
       role="button"
       tabIndex={0}
     >
-     <div className="flex justify-between items-start mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-gray-900 group-hover:text-[#4CA466] transition-colors">
-            {title}
-          </h3>
-          {id ? (
-            <div className="text-xs text-gray-400 mt-1">ID: <span className="font-mono text-gray-600">{id}</span></div>
-          ) : null}
-        </div>
+      {/* Gradient overlay for visual appeal */}
+      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/20 to-blue-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
+      
+      <div className="relative z-10">
+        {/* Header with ID and Status */}
+        <div className="flex justify-between items-start mb-2">
+          <div className="flex-1 min-w-0">
+            {id && (
+              <div className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md inline-block mb-2">
+                #{id}
+              </div>
+            )}
+            <h3 className="text-base font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors leading-tight">
+              {title}
+            </h3>
+          </div>
 
-        <div className="flex items-start gap-2">
-          <span
-            className={`px-2 py-1 rounded-full text-xs font-medium ${statusColors[status] || statusColors.unknown}`}
-          >
-            {status}
-          </span>
-
-          {/* Edit button: stops propagation so card onClick doesn't fire */}
-          {typeof onEdit === "function" ? (
-            <button
-              onClick={(e) => {
-                e.stopPropagation();
-                e.preventDefault();
-                onEdit(test);
-              }}
-              title="Edit test"
-              className="ml-1 p-1 rounded hover:bg-gray-100 transition-colors"
-              aria-label="Edit test"
+          <div className="flex items-center gap-2 ml-3">
+            <span
+              className={`px-2 py-1 capitalize rounded-full text-xs font-medium border ${statusColors[status] || statusColors.unknown}`}
             >
-              <Edit size={16} className="text-gray-600" />
-            </button>
-          ) : null}
-        </div>
-      </div>
+              {status}
+            </span>
 
-
-      {/* Description + Notes */}
-    <p className="text-gray-600 text-sm mb-2 line-clamp-2">{description}</p>
-      {notes ? (
-        <div className="text-sm text-gray-500 mb-4">
-          <strong className="text-gray-700">Notes:</strong> <span className="line-clamp-3">{notes}</span>
-        </div>
-      ) : null}
-
-      {/* Dates: show start date+time AND end date+time explicitly */}
-      <div className="grid grid-cols-2 gap-4 mb-4">
-        <div>
-          <div className="flex items-center text-sm text-gray-500">
-            <Calendar size={16} className="mr-2" />
-            <span className="font-medium text-gray-700 mr-2">Start</span>
-            <span>{startFormatted.date}</span>
-          </div>
-          <div className="flex items-center text-sm text-gray-500 mt-1">
-            <Clock size={16} className="mr-2" />
-            <span>{startFormatted.time} (Asia/Kolkata)</span>
+            {typeof onEdit === "function" && (
+              <button
+                onClick={(e) => {
+                  e.stopPropagation();
+                  e.preventDefault();
+                  onEdit(test);
+                }}
+                title="Edit test"
+                className="p-1.5 rounded-md hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
+                aria-label="Edit test"
+              >
+                <Edit size={14} className="text-gray-600" />
+              </button>
+            )}
           </div>
         </div>
 
-        <div>
-          <div className="flex items-center text-sm text-gray-500">
-            <Calendar size={16} className="mr-2" />
-            <span className="font-medium text-gray-700 mr-2">End</span>
-            <span>{endFormatted.date}</span>
+        {/* Description */}
+        <p className="text-gray-600 text-sm mb-3 line-clamp-2 leading-relaxed">{description}</p>
+
+        {/* Date and Time - Compact Layout */}
+        <div className="space-y-2 mb-3">
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center text-gray-600">
+              <Calendar size={14} className="mr-2 text-emerald-500" />
+              <span className="font-medium">Start:</span>
+            </div>
+            <div className="text-right">
+              <div className="font-medium text-gray-900">{startFormatted.date}</div>
+              <div className="text-xs text-gray-500">{startFormatted.time}</div>
+            </div>
           </div>
-          <div className="flex items-center text-sm text-gray-500 mt-1">
-            <Clock size={16} className="mr-2" />
-            <span>{endFormatted.time} (Asia/Kolkata)</span>
+
+          <div className="flex items-center justify-between text-sm">
+            <div className="flex items-center text-gray-600">
+              <Calendar size={14} className="mr-2 text-red-500" />
+              <span className="font-medium">End:</span>
+            </div>
+            <div className="text-right">
+              <div className="font-medium text-gray-900">{endFormatted.date}</div>
+              <div className="text-xs text-gray-500">{endFormatted.time}</div>
+            </div>
           </div>
         </div>
-      </div>
 
-      {/* Duration + raw seconds badge */}
-      <div className="flex items-center text-sm text-gray-600 mb-4">
-        <div className="flex items-center mr-3">
-          <Clock size={16} className="mr-2" />
-          <span className="font-medium text-gray-800 mr-2">Duration:</span>
-          <span>{durationReadable}</span>
+        {/* Duration */}
+        <div className="flex items-center justify-between text-sm mb-3">
+          <div className="flex items-center text-gray-600">
+            <Clock size={14} className="mr-2 text-blue-500" />
+            <span className="font-medium">Duration:</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-medium text-gray-900">{durationReadable}</span>
+          </div>
         </div>
 
-        {/* show raw seconds if available */}
-        <div className="ml-2 text-xs text-gray-500">
-          {durationSeconds != null ? <span className="px-2 py-0.5 bg-gray-100 rounded text-[11px] font-mono">{durationSeconds} s</span> : null}
-          {/* if duration was derived (not provided by backend) we can show a small note */}
-          {backend_duration_seconds == null && derivedDurationSeconds != null ? (
-            <span className="ml-2 text-xs italic text-gray-400">derived</span>
-          ) : null}
+        {/* Notes - always show with placeholder if empty */}
+        <div className="text-xs text-gray-500 mb-3 p-2 bg-gray-50 rounded-md">
+          <span className="font-medium text-gray-700">Notes:</span>{" "}
+          {notes ? (
+            <span className="text-gray-700">{notes}</span>
+          ) : (
+            <span className="italic text-gray-400">No notes available</span>
+          )}
         </div>
-      </div>
 
-      {/* Footer: Sections + Students */}
-      <div className="flex justify-between items-center pt-4 border-t border-gray-100">
-        <div className="flex items-center text-sm text-gray-500">
-          <FileText size={16} className="mr-1" />
-          <span>{sectionsCount} section{sectionsCount !== 1 ? "s" : ""}</span>
-        </div>
-        <div className="flex items-center text-sm text-gray-500">
-          <Users size={16} className="mr-1" />
-          <span>{assignedStudentCount} student{assignedStudentCount !== 1 ? "s" : ""}</span>
+        {/* Footer: Sections + Students */}
+        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
+          <div className="flex items-center text-sm text-gray-600">
+            <FileText size={14} className="mr-1.5 text-purple-500" />
+            <span className="font-medium">{sectionsCount}</span>
+            <span className="ml-1 text-gray-500">section{sectionsCount !== 1 ? "s" : ""}</span>
+          </div>
+          <div className="flex items-center text-sm text-gray-600">
+            <Users size={14} className="mr-1.5 text-orange-500" />
+            <span className="font-medium">{assignedStudentCount}</span>
+            <span className="ml-1 text-gray-500">student{assignedStudentCount !== 1 ? "s" : ""}</span>
+          </div>
         </div>
       </div>
     </div>
