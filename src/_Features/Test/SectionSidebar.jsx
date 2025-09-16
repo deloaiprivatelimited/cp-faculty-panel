@@ -2,72 +2,87 @@ import React from 'react';
 import { Clock, Unlock, Edit3, Plus } from 'lucide-react';
 
 const SectionSidebar = ({
-    timedSections= [],
-  openSections =[],
+  timedSections = [],
+  openSections = [],
   selectedSection,
   onSectionSelect,
   onSectionEdit,
   onAdd // new prop to open AddSectionModal from parent
 }) => {
+  const SectionItem = ({ section }) => {
+    console.log(section)
+    
+    const isSelected = selectedSection?.id === section.id;
+    const timeRestricted = !!(section.time_restricted || section.isTimeConstrained);
 
-  const SectionItem = ({ section }) => (
-    <div
-      className={`p-3 rounded-lg cursor-pointer transition-all group ${
-        selectedSection?.id === section.id
-          ? 'bg-[#4CA466] text-white'
-          : 'hover:bg-gray-100'
-      }`}
-      onClick={() => onSectionSelect(section)}
-    >
-      <div className="flex items-center justify-between mb-2">
-        <h4 className="font-medium text-sm truncate">{section.name}</h4>
-        <div className="flex items-center gap-1">
-          {section.isTimeConstrained ? (
-            <Clock size={14} className={selectedSection?.id === section.id ? 'text-white' : 'text-gray-500'} />
-          ) : (
-            <Unlock size={14} className={selectedSection?.id === section.id ? 'text-white' : 'text-gray-500'} />
+    return (
+      <div
+        role="button"
+        tabIndex={0}
+        onKeyDown={(e) => { if (e.key === 'Enter' || e.key === ' ') { onSectionSelect(section); } }}
+        onClick={() => onSectionSelect(section)}
+        className={`p-3 rounded-lg cursor-pointer transition-all flex flex-col justify-between group outline-none focus:ring-2 focus:ring-offset-1 ${
+          isSelected ? 'bg-[#4CA466] text-white' : 'hover:bg-gray-50'
+        }`}
+      >
+        <div className="flex items-start justify-between gap-2">
+          <div className="min-w-0">
+            <h4 className="font-medium text-sm truncate">{section.name || 'Untitled Section'}</h4>
+            {section.description && (
+              <p className={`text-xs mt-1 truncate ${isSelected ? 'text-white/90' : 'text-gray-500'}`}>
+                {section.description}
+              </p>
+            )}
+          </div>
+
+          <div className="flex-shrink-0 flex items-center gap-1">
+            {timeRestricted ? (
+              <Clock size={14} className={isSelected ? 'text-white' : 'text-gray-400'} />
+            ) : (
+              <Unlock size={14} className={isSelected ? 'text-white' : 'text-gray-400'} />
+            )}
+
+            <button
+              onClick={(e) => {
+                e.stopPropagation();
+                onSectionEdit && onSectionEdit(section);
+              }}
+              className={`p-1 rounded hover:bg-white/10 transition-colors ${isSelected ? 'text-white' : 'text-gray-400'}`}
+              aria-label={`Edit ${section.name}`}
+            >
+              <Edit3 size={14} />
+            </button>
+          </div>
+        </div>
+
+        <div className="flex items-center justify-between text-xs mt-3">
+          <span className={isSelected ? 'text-white/90' : 'text-gray-500'}>
+            {(section.questions || []).length} questions
+          </span>
+          {timeRestricted && (
+            <span className={isSelected ? 'text-white/90' : 'text-gray-500'}>
+              {section.duration ?? section.time_limit ?? '—'} min
+            </span>
           )}
-          <button
-            onClick={(e) => {
-              e.stopPropagation();
-              onSectionEdit(section);
-            }}
-            className={`p-1 rounded hover:bg-opacity-20 hover:bg-gray-500 transition-colors ${
-              selectedSection?.id === section.id ? 'text-white' : 'text-gray-400'
-            }`}
-            aria-label="Edit section"
-          >
-            <Edit3 size={12} />
-          </button>
         </div>
       </div>
-      <div className="flex justify-between text-xs">
-        <span className={selectedSection?.id === section.id ? 'text-white opacity-80' : 'text-gray-500'}>
-          {(section.questions || []).length} questions
-        </span>
-        {section.isTimeConstrained && (
-          <span className={selectedSection?.id === section.id ? 'text-white opacity-80' : 'text-gray-500'}>
-            {section.duration} min
-          </span>
-        )}
-      </div>
-    </div>
-  );
+    );
+  };
 
   return (
-    // full viewport height so sidebar remains fixed and doesn't scroll with page
-    <div className="h-screen flex flex-col bg-white">
-      <div className="p-4 flex-1 flex flex-col">
-        {/* Timed Sections — independently scrollable */}
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+    <div className="h-full flex flex-col bg-white shadow-sm">
+      <div className="flex-1 overflow-hidden flex flex-col px-4 py-3 gap-4">
+        {/* Timed Sections */}
+        <div className="flex flex-col">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
             <Clock size={16} />
             Timed Sections
           </h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+
+          <div className="space-y-2 overflow-auto max-h-[18rem] pr-2">
             {timedSections.length ? (
-              timedSections.map(section => (
-                <SectionItem key={section.id} section={section} />
+              timedSections.map((section) => (
+                <SectionItem key={section.id} section={{ ...section, time_restricted: true }} />
               ))
             ) : (
               <div className="text-xs text-gray-400">No timed sections</div>
@@ -75,16 +90,17 @@ const SectionSidebar = ({
           </div>
         </div>
 
-        {/* Open Sections — independently scrollable */}
-        <div className="mb-4">
-          <h3 className="text-sm font-semibold text-gray-700 mb-3 flex items-center gap-2">
+        {/* Open Sections */}
+        <div className="flex flex-col">
+          <h3 className="text-sm font-semibold text-gray-700 mb-2 flex items-center gap-2">
             <Unlock size={16} />
             Open Sections
           </h3>
-          <div className="space-y-2 max-h-48 overflow-y-auto pr-2">
+
+          <div className="space-y-2 overflow-auto max-h-[18rem] pr-2">
             {openSections.length ? (
-              openSections.map(section => (
-                <SectionItem key={section.id} section={section} />
+              openSections.map((section) => (
+                <SectionItem key={section.id} section={{ ...section, time_restricted: false }} />
               ))
             ) : (
               <div className="text-xs text-gray-400">No open sections</div>
@@ -92,9 +108,9 @@ const SectionSidebar = ({
           </div>
         </div>
 
-        {/* Fallback if there are zero sections at all */}
-        {openSections.length === 0 &&  timedSections.length ===0 &&(
-          <div className="mt-auto text-center text-gray-500 py-8">
+        {/* Empty state */}
+        {openSections.length === 0 && timedSections.length === 0 && (
+          <div className="mt-auto text-center text-gray-500 py-6">
             <div className="text-4xl mb-2">📚</div>
             <p className="text-sm">No sections yet</p>
             <p className="text-xs mt-1">Add a section to get started</p>
@@ -102,8 +118,8 @@ const SectionSidebar = ({
         )}
       </div>
 
-      {/* bottom area with Add Section button — pinned */}
-      <div className="p-4 border-t bg-white">
+      {/* pinned footer without border */}
+      <div className="px-4 py-3">
         <button
           onClick={() => onAdd && onAdd()}
           className="w-full flex items-center justify-center gap-2 bg-[#4CA466] text-white px-3 py-2 rounded-lg hover:bg-[#3d8a54] transition-colors"
