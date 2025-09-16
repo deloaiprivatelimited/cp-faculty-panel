@@ -41,7 +41,6 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
   const [page, setPage] = useState(1);
   const [perPage] = useState(50);
   const [total, setTotal] = useState<number | null>(null);
-  const [sectionId, setSectionId] = useState(defaultSectionId);
   const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
@@ -61,12 +60,24 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSource, page]);
 
+  const buildListUrl = (source: Exclude<SourceType, null>, pageNum = 1, per = 20) => {
+    // For "global" use the same 'questions' path.
+    // For "library" (aka "myqs") replace 'questions' with 'college-questions'.
+    const resourceSegment = source === 'library' ? 'college-questions' : 'questions';
+    const qp = new URLSearchParams({ page: String(pageNum), per_page: String(per), source });
+    return `${apiBase}/test/${resourceSegment}/mcqs/?${qp.toString()}`.replace(/([^:]\/\/)\//, '$1');
+  };
+
+  const buildDuplicateUrl = (source: Exclude<SourceType, null>, mcqId: string) => {
+    const resourceSegment = source === 'library' ? 'college-questions' : 'questions';
+    return `${apiBase}/test/${resourceSegment}/mcqs/${mcqId}/duplicate-to-section`;
+  };
+
   const fetchMCQs = async (source: Exclude<SourceType, null>, pageNum = 1, per = 20) => {
     setLoading(true);
     setError(null);
     try {
-      const qp = new URLSearchParams({ page: String(pageNum), per_page: String(per), source });
-      const url = `${apiBase}/test/questions/mcqs/?${qp.toString()}`.replace(/([^:]\/\/)\//, '$1');
+      const url = buildListUrl(source, pageNum, per);
 
       const res = await privateAxios.get(url);
 
@@ -100,10 +111,6 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
 
   const handleDuplicateAndAdd = async () => {
     if (!selectedSource) return;
-    if (!sectionId || sectionId.trim() === '') {
-      setError('Please enter a section id to attach duplicated MCQs to.');
-      return;
-    }
 
     setDuplicating(true);
     setError(null);
@@ -113,8 +120,9 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
     try {
       for (const mcqId of selectedIds) {
         try {
-          const url = `${apiBase}/test/questions/mcqs/${mcqId}/duplicate-to-section`;
-          const res = await privateAxios.post(url, { section_id: sectionId });
+          const url = buildDuplicateUrl(selectedSource, mcqId);
+          // section_id removed as requested. Sending empty body.
+          const res = await privateAxios.post(url, {});
           const body = res.data;
 
           if (!body.success) {
@@ -140,7 +148,6 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
       setSelectedSource(null);
       setSelectedIds([]);
       setQuestions([]);
-      setSectionId(defaultSectionId);
       onClose();
     } catch (err: any) {
       console.error(err);
@@ -265,16 +272,6 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
               </div>
 
               <div className="pt-4 border-t border-gray-200 space-y-3">
-                <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700">Section ID</label>
-                  <input
-                    value={sectionId}
-                    onChange={e => setSectionId(e.target.value)}
-                    placeholder="Enter section id to attach to"
-                    className="flex-1 p-2 border rounded"
-                  />
-                </div>
-
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={handleBack}
@@ -287,7 +284,7 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
                     disabled={selectedIds.length === 0 || duplicating}
                     className="px-4 py-2 bg-blue-500 text-white rounded-lg hover:bg-blue-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    {duplicating ? 'Adding...' : `Duplicate & Add (${selectedIds.length})`}
+                    {duplicating ? 'Processing...' : `Duplicate (${selectedIds.length})`}
                   </button>
                 </div>
               </div>

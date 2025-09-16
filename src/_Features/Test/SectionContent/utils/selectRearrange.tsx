@@ -48,7 +48,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
   const [page, setPage] = useState(1);
   const [perPage] = useState(50);
   const [total, setTotal] = useState<number | null>(null);
-  const [sectionId, setSectionId] = useState(defaultSectionId);
   const [duplicating, setDuplicating] = useState(false);
 
   useEffect(() => {
@@ -68,12 +67,22 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [selectedSource, page]);
 
+  const buildListUrl = (source: Exclude<SourceType, null>, pageNum = 1, per = 20) => {
+    const resourceSegment = source === 'library' ? 'college-questions' : 'questions';
+    const qp = new URLSearchParams({ page: String(pageNum), per_page: String(per), source });
+    return `${apiBase}/test/${resourceSegment}/rearranges/?${qp.toString()}`.replace(/([^:]\/\/)\//, '$1');
+  };
+
+  const buildDuplicateUrl = (source: Exclude<SourceType, null>, rearrId: string) => {
+    const resourceSegment = source === 'library' ? 'college-questions' : 'questions';
+    return `${apiBase}/test/${resourceSegment}/rearranges/${rearrId}/duplicate-to-section`;
+  };
+
   const fetchRearranges = async (source: Exclude<SourceType, null>, pageNum = 1, per = 20) => {
     setLoading(true);
     setError(null);
     try {
-      const qp = new URLSearchParams({ page: String(pageNum), per_page: String(per), source });
-      const url = `${apiBase}/test/questions/rearranges/?${qp.toString()}`.replace(/([^:]\/\/)\//, '$1');
+      const url = buildListUrl(source, pageNum, per);
 
       const res = await privateAxios.get(url);
       const body = res.data;
@@ -111,10 +120,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
 
   const handleDuplicateAndAdd = async () => {
     if (!selectedSource) return;
-    if (!sectionId || sectionId.trim() === '') {
-      setError('Please enter a section id to attach duplicated Rearranges to.');
-      return;
-    }
 
     setDuplicating(true);
     setError(null);
@@ -124,8 +129,9 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
     try {
       for (const rearrId of selectedIds) {
         try {
-          const url = `${apiBase}/test/questions/rearranges/${rearrId}/duplicate-to-section`;
-          const res = await privateAxios.post(url, { section_id: sectionId });
+          const url = buildDuplicateUrl(selectedSource, rearrId);
+          // section_id removed per request — send empty body
+          const res = await privateAxios.post(url, {});
           const body = res.data;
 
           if (!body.success) {
@@ -151,7 +157,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
       setSelectedSource(null);
       setSelectedIds([]);
       setQuestions([]);
-      setSectionId(defaultSectionId);
       onClose();
     } catch (err: any) {
       console.error(err);
@@ -283,16 +288,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
               </div>
 
               <div className="pt-4 border-t border-gray-200 space-y-3">
-                <div className="flex items-center gap-3">
-                  <label className="text-sm text-gray-700">Section ID</label>
-                  <input
-                    value={sectionId}
-                    onChange={e => setSectionId(e.target.value)}
-                    placeholder="Enter section id to attach to"
-                    className="flex-1 p-2 border rounded"
-                  />
-                </div>
-
                 <div className="flex justify-end gap-3">
                   <button
                     onClick={handleBack}
@@ -305,7 +300,7 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
                     disabled={selectedIds.length === 0 || duplicating}
                     className="px-4 py-2 bg-indigo-500 text-white rounded-lg hover:bg-indigo-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
                   >
-                    {duplicating ? 'Adding...' : `Duplicate & Add (${selectedIds.length})`}
+                    {duplicating ? 'Processing...' : `Duplicate (${selectedIds.length})`}
                   </button>
                 </div>
               </div>
