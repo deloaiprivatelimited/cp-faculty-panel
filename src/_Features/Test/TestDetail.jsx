@@ -205,13 +205,11 @@ const TestDetail = ({
   return (
     <div className="min-h-screen" style={{ backgroundColor: SECONDARY }}>
       {/* Header */}
-      <header className="fixed top-0 left-0 right-0 h-16 shadow-sm z-40" style={{ backgroundColor: SECONDARY }}>
+      <header className="fixed top-0 left-0 right-0 h-16  z-40" >
         <div className="px-6 py-4 h-full flex items-center justify-between">
           <div className="flex items-center">
             <div>
-              <h1 className="text-2xl font-bold" style={{ color: '#111827' }}>{test?.test_name || 'Test Details'}</h1>
-              <p className="text-sm mt-1" style={{ color: '#374151' }}>{test?.description || ''}</p>
-            </div>
+           </div>
           </div>
           <div className="flex items-center gap-3">
             <button
@@ -264,7 +262,7 @@ const TestDetail = ({
             {selectedSection ? (
               <ListQuestionCards section={selectedSection} />
             ) : (
-              <div className="flex flex-col items-center justify-center h-96 border-2 border-dashed rounded-lg p-8" style={{ borderColor: '#E6EFE9', backgroundColor: SECONDARY }}>
+              <div className="flex flex-col items-center justify-center h-96  rounded-lg p-8" style={{ borderColor: '#E6EFE9', backgroundColor: SECONDARY }}>
                 <div style={{ width: 64, height: 64, borderRadius: 12, display: 'flex', alignItems: 'center', justifyContent: 'center', backgroundColor: '#F5F8F6' }}>
                   <Plus size={36} style={{ color: PRIMARY }} />
                 </div>
