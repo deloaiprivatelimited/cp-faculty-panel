@@ -1,23 +1,40 @@
-import React, { useState } from 'react';
+// CodingPreview.jsx
+import React, { useEffect, useState, useRef } from 'react';
+import PropTypes from 'prop-types';
 import { X, Code, Clock, Trophy, Copy } from 'lucide-react';
-// import { CodingData } from '../../types/questionTypes';
-// import MarkdownRenderer from '../../../../../../../utils/MarkDownRender';
-import { CodingData } from '../../../Test/SectionContent/utils/ListSectionQuestions/types/questionTypes';
-import MarkdownRenderer from '../../../../utils/MarkDownRender';
-interface CodingPreviewProps {
-  data: CodingData;
-  onClose: () => void;
-}
+import MarkdownRenderer from '../../../utils/MarkDownRender';
 
-export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) => {
-  const [selectedLanguage, setSelectedLanguage] = useState(
-    data.allowed_languages && data.allowed_languages.length > 0
-      ? data.allowed_languages[0]
-      : 'python'
-  );
-  const [activeTab, setActiveTab] = useState<'description' | 'examples' | 'boilerplate' | 'solution'>('description');
+const CodingPreview = ({ coding, isOpen, onClose }) => {
+  const [selectedLanguage, setSelectedLanguage] = useState('python');
+  const [activeTab, setActiveTab] = useState('description');
+  const backdropRef = useRef(null);
 
-  const getDifficultyColor = (level: string) => {
+  // Reset local state when a new coding is opened
+  useEffect(() => {
+    if (coding) {
+      setSelectedLanguage(
+        coding.allowed_languages && coding.allowed_languages.length > 0
+          ? coding.allowed_languages[0]
+          : 'python'
+      );
+      setActiveTab('description');
+    }
+  }, [coding]);
+
+  // Escape key closes modal
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKey = (e) => {
+      if (e.key === 'Escape') onClose();
+    };
+    window.addEventListener('keydown', handleKey);
+    return () => window.removeEventListener('keydown', handleKey);
+  }, [isOpen, onClose]);
+
+  if (!isOpen || !coding) return null;
+
+  const getDifficultyColor = (level) => {
+    if (!level) return 'bg-gray-100 text-gray-600';
     switch (level.toLowerCase()) {
       case 'easy': return 'bg-green-100 text-green-600';
       case 'medium': return 'bg-yellow-100 text-yellow-600';
@@ -26,35 +43,61 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
     }
   };
 
-  const copyToClipboard = (text?: string) => {
+  const copyToClipboard = (text) => {
     if (!text) return;
-    navigator.clipboard.writeText(text);
+    if (navigator?.clipboard?.writeText) {
+      navigator.clipboard.writeText(text).catch(() => {});
+    } else {
+      // fallback
+      const ta = document.createElement('textarea');
+      ta.value = text;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      document.body.appendChild(ta);
+      ta.select();
+      try { document.execCommand('copy'); } catch (e) { /* ignore */ }
+      document.body.removeChild(ta);
+    }
   };
 
-  const formatMemory = (kb: number) => {
-    if (kb >= 1024) {
-      return `${(kb / 1024).toFixed(1)}MB`;
-    }
+  const formatMemory = (kb) => {
+    if (typeof kb !== 'number') return '';
+    if (kb >= 1024) return `${(kb / 1024).toFixed(1)}MB`;
     return `${kb}KB`;
   };
 
-  const boilerplateFor = (lang: string) => data.predefined_boilerplates?.[lang] ?? '';
-  const solutionFor = (lang: string) => data.solution_code?.[lang] ?? '';
+  const boilerplateFor = (lang) =>
+    (coding.predefined_boilerplates && coding.predefined_boilerplates[lang]) ? coding.predefined_boilerplates[lang] : '';
+  const solutionFor = (lang) =>
+    (coding.solution_code && coding.solution_code[lang]) ? coding.solution_code[lang] : '';
 
+  // Backdrop click: close only if clicking the backdrop (not the modal)
+  const onBackdropClick = (e) => {
+    if (e.target === backdropRef.current) onClose();
+  };
+console.log('coding')
+console.log(coding)
   return (
-    <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
+    <div
+      ref={backdropRef}
+      onMouseDown={onBackdropClick}
+      className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4"
+      role="dialog"
+      aria-modal="true"
+    >
       <div className="bg-white rounded-lg max-w-6xl w-full max-h-[90vh] overflow-hidden flex flex-col">
         <div className="bg-white p-6 border-b border-gray-200 flex items-center justify-between flex-shrink-0">
           <div>
             <h2 className="text-2xl font-bold text-gray-800 flex items-center gap-2">
               <Code size={24} className="text-[#4CA466]" />
-              {data.title}
+              {coding.title || 'Untitled'}
             </h2>
-            <p className="text-gray-600">{data.topic} • {data.subtopic}</p>
+            <p className="text-gray-600">{coding.topic || ''} {coding.subtopic ? `• ${coding.subtopic}` : ''}</p>
           </div>
           <button
             onClick={onClose}
             className="p-2 hover:bg-gray-100 rounded-full transition-colors"
+            aria-label="Close preview"
           >
             <X size={24} />
           </button>
@@ -63,24 +106,27 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
         <div className="flex-1 overflow-y-auto">
           <div className="p-6">
             <div className="flex items-center gap-4 mb-6">
-              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(data.difficulty)}`}>
-                {data.difficulty}
+              <span className={`px-3 py-1 rounded-full text-sm font-medium ${getDifficultyColor(coding.difficulty)}`}>
+                {coding.difficulty || 'unknown'}
               </span>
+
               <div className="flex items-center gap-1 text-sm text-gray-600">
                 <Trophy size={16} />
-                <span>{data.points} points</span>
+                <span>{coding.points ?? '-' } points</span>
               </div>
+
               <div className="flex items-center gap-1 text-sm text-gray-600">
                 <Clock size={16} />
-                <span>Time: {data.time_limit_ms}ms</span>
+                <span>Time: {coding.time_limit_ms ?? '-'}ms</span>
               </div>
+
               <div className="text-sm text-gray-600">
-                Memory: {formatMemory(data.memory_limit_kb)}
+                Memory: {formatMemory(coding.memory_limit_kb)}
               </div>
             </div>
 
             <div className="mb-6">
-              <p className="text-gray-700 text-lg">{data.short_description}</p>
+              <p className="text-gray-700 text-lg">{coding.short_description || ''}</p>
             </div>
 
             <div className="mb-6">
@@ -88,9 +134,7 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
                 <button
                   onClick={() => setActiveTab('description')}
                   className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                    activeTab === 'description'
-                      ? 'border-[#4CA466] text-[#4CA466]'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                    activeTab === 'description' ? 'border-[#4CA466] text-[#4CA466]' : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Problem Description
@@ -98,9 +142,7 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
                 <button
                   onClick={() => setActiveTab('examples')}
                   className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                    activeTab === 'examples'
-                      ? 'border-[#4CA466] text-[#4CA466]'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                    activeTab === 'examples' ? 'border-[#4CA466] text-[#4CA466]' : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Examples
@@ -108,20 +150,15 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
                 <button
                   onClick={() => setActiveTab('boilerplate')}
                   className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                    activeTab === 'boilerplate'
-                      ? 'border-[#4CA466] text-[#4CA466]'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                    activeTab === 'boilerplate' ? 'border-[#4CA466] text-[#4CA466]' : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Code Template
                 </button>
-
                 <button
                   onClick={() => setActiveTab('solution')}
                   className={`px-4 py-2 font-medium text-sm border-b-2 transition-colors ${
-                    activeTab === 'solution'
-                      ? 'border-[#4CA466] text-[#4CA466]'
-                      : 'border-transparent text-gray-500 hover:text-gray-700'
+                    activeTab === 'solution' ? 'border-[#4CA466] text-[#4CA466]' : 'border-transparent text-gray-500 hover:text-gray-700'
                   }`}
                 >
                   Solution
@@ -130,37 +167,41 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
 
               {activeTab === 'description' && (
                 <div className="prose max-w-none">
-                  <MarkdownRenderer text={data.long_description_markdown}/>
+                  <MarkdownRenderer text={coding.long_description_markdown || ''} />
                 </div>
               )}
 
               {activeTab === 'examples' && (
                 <div className="space-y-6">
-                  {data.sample_io && data.sample_io.map((example, index) => (
-                    <div key={index} className="border border-gray-200 rounded-lg p-4">
-                      <h4 className="font-semibold text-gray-800 mb-3">Example {index + 1}</h4>
-                      
-                      <div className="grid md:grid-cols-2 gap-4 mb-4">
-                        <div>
-                          <h5 className="text-sm font-medium text-gray-600 mb-2">Input:</h5>
-                          <pre className="bg-gray-50 p-3 rounded text-sm font-mono overflow-x-auto">
-                            {example.input_text}
-                          </pre>
+                  {coding.sample_io && coding.sample_io.length > 0 ? (
+                    coding.sample_io.map((example, index) => (
+                      <div key={index} className="border border-gray-200 rounded-lg p-4">
+                        <h4 className="font-semibold text-gray-800 mb-3">Example {index + 1}</h4>
+                        <div className="grid md:grid-cols-2 gap-4 mb-4">
+                          <div>
+                            <h5 className="text-sm font-medium text-gray-600 mb-2">Input:</h5>
+                            <pre className="bg-gray-50 p-3 rounded text-sm font-mono overflow-x-auto">
+                              {example.input_text}
+                            </pre>
+                          </div>
+                          <div>
+                            <h5 className="text-sm font-medium text-gray-600 mb-2">Output:</h5>
+                            <pre className="bg-gray-50 p-3 rounded text-sm font-mono overflow-x-auto">
+                              {example.output}
+                            </pre>
+                          </div>
                         </div>
                         <div>
-                          <h5 className="text-sm font-medium text-gray-600 mb-2">Output:</h5>
-                          <pre className="bg-gray-50 p-3 rounded text-sm font-mono overflow-x-auto">
-                            {example.output}
-                          </pre>
+                          <h5 className="text-sm font-medium text-gray-600 mb-2">Explanation:</h5>
+                          <p className="text-gray-700 text-sm">{example.explanation}</p>
                         </div>
                       </div>
-                      
-                      <div>
-                        <h5 className="text-sm font-medium text-gray-600 mb-2">Explanation:</h5>
-                        <p className="text-gray-700 text-sm">{example.explanation}</p>
-                      </div>
+                    ))
+                  ) : (
+                    <div className="p-4 rounded border border-gray-200 bg-gray-50 text-gray-600">
+                      No examples available.
                     </div>
-                  ))}
+                  )}
                 </div>
               )}
 
@@ -173,14 +214,14 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
                       onChange={(e) => setSelectedLanguage(e.target.value)}
                       className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#4CA466]"
                     >
-                      {data.allowed_languages.map((lang) => (
+                      {(coding.allowed_languages || []).map((lang) => (
                         <option key={lang} value={lang}>
                           {lang.charAt(0).toUpperCase() + lang.slice(1)}
                         </option>
                       ))}
                     </select>
                   </div>
-                  
+
                   <div className="relative">
                     <button
                       onClick={() => copyToClipboard(boilerplateFor(selectedLanguage))}
@@ -205,7 +246,7 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
                       onChange={(e) => setSelectedLanguage(e.target.value)}
                       className="px-3 py-1 border border-gray-300 rounded text-sm focus:outline-none focus:ring-2 focus:ring-[#4CA466]"
                     >
-                      {data.allowed_languages.map((lang) => (
+                      {(coding.allowed_languages || []).map((lang) => (
                         <option key={lang} value={lang}>
                           {lang.charAt(0).toUpperCase() + lang.slice(1)}
                         </option>
@@ -236,11 +277,11 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
               )}
             </div>
 
-            {data.tags && data.tags.length > 0 && (
+            {coding.tags && coding.tags.length > 0 && (
               <div>
                 <h3 className="text-lg font-semibold mb-3">Tags</h3>
                 <div className="flex flex-wrap gap-2">
-                  {data.tags.map((tag, index) => (
+                  {coding.tags.map((tag, index) => (
                     <span key={index} className="px-3 py-1 bg-gray-100 text-gray-600 rounded-full text-sm">
                       {tag}
                     </span>
@@ -254,3 +295,35 @@ export const CodingPreview: React.FC<CodingPreviewProps> = ({ data, onClose }) =
     </div>
   );
 };
+
+CodingPreview.propTypes = {
+  coding: PropTypes.shape({
+    title: PropTypes.string,
+    topic: PropTypes.string,
+    subtopic: PropTypes.string,
+    difficulty: PropTypes.string,
+    points: PropTypes.number,
+    time_limit_ms: PropTypes.oneOfType([PropTypes.number, PropTypes.string]),
+    memory_limit_kb: PropTypes.number,
+    short_description: PropTypes.string,
+    long_description_markdown: PropTypes.string,
+    sample_io: PropTypes.arrayOf(PropTypes.shape({
+      input_text: PropTypes.string,
+      output: PropTypes.string,
+      explanation: PropTypes.string,
+    })),
+    allowed_languages: PropTypes.arrayOf(PropTypes.string),
+    predefined_boilerplates: PropTypes.object,
+    solution_code: PropTypes.object,
+    tags: PropTypes.arrayOf(PropTypes.string),
+  }),
+  isOpen: PropTypes.bool,
+  onClose: PropTypes.func.isRequired,
+};
+
+CodingPreview.defaultProps = {
+  coding: null,
+  isOpen: false,
+};
+
+export default CodingPreview;

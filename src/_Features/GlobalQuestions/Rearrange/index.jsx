@@ -1,25 +1,14 @@
-// pages/index.jsx
+// pages/rearrange/index.jsx
 import React, { useEffect, useCallback, useState } from 'react';
-import { privateAxios } from '../../../../utils/axios';
-// import CodingList from '../../../Utils/Coding/CodingList';
-import MCQList from '../../../Utils/MCQ/MCQList';
-import { useNavigate } from 'react-router-dom';
-import { showError,showSuccess } from '../../../../utils/toast';
+import { privateAxios } from '../../../utils/axios';
+import RearrangeList from '../../Utils/Rearrange/RearrangeList';
+import { showError, showSuccess } from '../../../utils/toast';
 
-const IndexPage = () => {
-  const [mcqData, setMcqData] = useState({ items: [], page: 1, per_page: 5, total: 0 });
+const RearrangeIndexPage = () => {
+  const [rearrangeData, setRearrangeData] = useState({ items: [], page: 1, per_page: 20, total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
- // Navigation handlers
-  const handleAdd = () => {
-    navigate('/questions/mcq/add');
-  };
 
-  const handleEdit = (mcq) => {
-    if (!mcq?.id) return;
-    navigate(`/questions/mcq/${mcq.id}/edit`);
-  };
   // Controlled UI state
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('');
@@ -40,13 +29,13 @@ const IndexPage = () => {
     return params;
   }, [searchTerm, selectedTopic, selectedSubtopic, selectedDifficulty, currentPage, itemsPerPage]);
 
-  const fetchMCQs = useCallback(
+  const fetchRearranges = useCallback(
     async (signal) => {
       setLoading(true);
       setError(null);
       try {
         const params = buildParams();
-        const resp = await privateAxios.get('/v1/mcq/college_mcqs', { params, signal });
+        const resp = await privateAxios.get('/v1/rearrange/rearranges', { params, signal });
         const data = resp.data || {};
 
         const items = Array.isArray(data.items) ? data.items : [];
@@ -54,21 +43,20 @@ const IndexPage = () => {
         const per_page = data.per_page ?? params.per_page ?? itemsPerPage;
         const total = typeof data.total === 'number' ? data.total : items.length;
 
-        setMcqData({ items, page, per_page, total });
+        setRearrangeData({ items, page, per_page, total });
 
-        // ✅ Show success toast only if data exists
         if (items.length > 0) {
-          // showSuccess('MCQs loaded successfully!');
+          // showSuccess('Rearrange items loaded successfully!');
         } else {
-          showError('No MCQs found with the current filters.');
+          showError('No rearrange items found with the current filters.');
         }
       } catch (err) {
         if (err?.name === 'CanceledError' || err?.name === 'AbortError') {
-          // ignore cancelled request
+          // Request was cancelled — ignore
         } else {
-          console.error('fetchMCQs error', err);
-          setError('Failed to load questions. Please try again.');
-          showError('Failed to load questions. Please try again.');
+          console.error('fetchRearranges error', err);
+          setError('Failed to load rearrange questions. Please try again.');
+          showError('Failed to load rearrange questions. Please try again.');
         }
       } finally {
         setLoading(false);
@@ -79,16 +67,16 @@ const IndexPage = () => {
 
   useEffect(() => {
     const controller = new AbortController();
-    fetchMCQs(controller.signal);
+    fetchRearranges(controller.signal);
     return () => controller.abort();
-  }, [fetchMCQs]);
+  }, [fetchRearranges]);
 
-  // Derived lists
-  const topics = Array.from(new Set(mcqData.items.map(i => i.topic).filter(Boolean)));
-  const subtopics = Array.from(new Set(mcqData.items.map(i => i.subtopic).filter(Boolean)));
-  const difficulties = Array.from(new Set(mcqData.items.map(i => i.difficulty_level).filter(Boolean)));
+  // Derived lists for filters (from currently loaded items)
+  const topics = Array.from(new Set(rearrangeData.items.map(i => i.topic).filter(Boolean)));
+  const subtopics = Array.from(new Set(rearrangeData.items.map(i => i.subtopic).filter(Boolean)));
+  const difficulties = Array.from(new Set(rearrangeData.items.map(i => i.difficulty_level).filter(Boolean)));
 
-  // Handlers
+  // Handlers — same shape as MCQ page so RearrangeList stays controlled
   const handleSearchChange = (v) => { setSearchTerm(v); setCurrentPage(1); };
   const handleTopicChange = (v) => { setSelectedTopic(v); setCurrentPage(1); };
   const handleSubtopicChange = (v) => { setSelectedSubtopic(v); setCurrentPage(1); };
@@ -103,34 +91,11 @@ const IndexPage = () => {
     setItemsPerPage(5);
     setCurrentPage(1);
   };
-  const handleDelete = async (mcq) => {
-  if (!mcq?.id) return;
-  const ok = window.confirm("Are you sure you want to delete this question?");
-  if (!ok) return;
-
-  try {
-    const resp = await privateAxios.delete(`/v1/mcq/college_mcqs/${mcq.id}`);
-    const data = resp?.data || {};
-
-    if (data.success) {
-      showSuccess(data.message || "Deleted successfully");
-      // refresh list after delete
-      fetchMCQs();
-    } else {
-      showError(data.message || "Delete failed");
-    }
-  } catch (err) {
-    console.error("Delete error", err);
-    const msg = err?.response?.data?.message || err?.message || "Failed to delete. Please try again.";
-    showError(msg);
-  }
-};
-
 
   return (
-    <MCQList
-    heading='Global Questions'
-      mcqData={mcqData}
+    <RearrangeList
+      heading="Rearrange Questions"
+      rearrangeData={rearrangeData}
       loading={loading}
       error={error}
 
@@ -155,14 +120,8 @@ const IndexPage = () => {
       onPageChange={handlePageChange}
       onItemsPerPageChange={handleItemsPerPageChange}
       onResetFilters={handleResetFilters}
-handleDelete={handleDelete}
-handleAdd={handleAdd}
-handleEdit={handleEdit}
-    editEnabled={true}
-    addEnabled={true}
-    deleteEnabled={true}
     />
   );
 };
 
-export default IndexPage;
+export default RearrangeIndexPage;

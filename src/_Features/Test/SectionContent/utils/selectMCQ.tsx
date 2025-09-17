@@ -4,10 +4,24 @@ import { BookOpen, Globe, Check, X } from 'lucide-react';
 import { privateAxios } from '../../../../utils/axios';
 export type SourceType = 'library' | 'global' | null;
 
+export interface Option {
+  id: string;
+  text: string;
+  is_correct?: boolean;
+}
+
 export interface Question {
   id: string;
   title: string;
+  question?: string; // full question text
   description?: string;
+  options?: Option[];
+  marks?: number | null;
+  negative_marks?: number | null;
+  is_multiple?: boolean;
+  difficulty_level?: string;
+  tags?: string[];
+  created_by?: { id?: string; name?: string } | null;
 }
 
 export interface DuplicateResult {
@@ -61,8 +75,6 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
   }, [selectedSource, page]);
 
   const buildListUrl = (source: Exclude<SourceType, null>, pageNum = 1, per = 20) => {
-    // For "global" use the same 'questions' path.
-    // For "library" (aka "myqs") replace 'questions' with 'college-questions'.
     const resourceSegment = source === 'library' ? 'college-questions' : 'questions';
     const qp = new URLSearchParams({ page: String(pageNum), per_page: String(per), source });
     return `${apiBase}/test/${resourceSegment}/mcqs/?${qp.toString()}`.replace(/([^:]\/\/)\//, '$1');
@@ -85,7 +97,25 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
       if (!body.success) throw new Error(body.message || 'Failed to fetch');
 
       const items = (body.data && body.data.items) || [];
-      const mapped: Question[] = items.map((it: any) => ({ id: it.id, title: it.title || it.question || it.question_text || '', description: it.tags ? it.tags.join(', ') : it.difficulty_level || it.topic || '' }));
+
+      // map to our Question interface and include options + full text if present
+      const mapped: Question[] = items.map((it: any) => ({
+        id: it.id,
+        title: it.title || it.question || it.question_text || '',
+        question: it.question || it.question_text || '',
+        description: Array.isArray(it.tags) ? it.tags.join(', ') : (it.difficulty_level || it.topic || ''),
+        options: Array.isArray(it.options) ? it.options.map((o: any) => ({
+          id: o.id || o.option_id || String(o.id),
+          text: o.text || o.value || '',
+          is_correct: !!o.is_correct
+        })) : [],
+        marks: it.marks ?? null,
+        negative_marks: it.negative_marks ?? null,
+        is_multiple: !!it.is_multiple,
+        difficulty_level: it.difficulty_level,
+        tags: it.tags || [],
+        created_by: it.created_by || null
+      }));
 
       setQuestions(mapped);
       setTotal(body.data && body.data.meta ? body.data.meta.total : null);
@@ -233,19 +263,59 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
                 {questions.map(q => (
                   <div
                     key={q.id}
-                    className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
+                    className={`flex flex-col gap-2 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer ${selectedIds.includes(q.id) ? 'ring-2 ring-blue-200' : ''}`}
                     onClick={() => toggleQuestion(q.id)}
                   >
-                    <div className="flex items-center justify-center w-5 h-5 mt-0.5">
-                      <div
-                        className={`w-4 h-4 border-2 rounded ${selectedIds.includes(q.id) ? 'bg-blue-500 border-blue-500' : 'border-gray-300'} flex items-center justify-center`}
-                      >
-                        {selectedIds.includes(q.id) && <Check className="w-3 h-3 text-white" />}
+                    <div className="flex items-start gap-3">
+                      <div className="flex items-center justify-center w-5 h-5 mt-0.5">
+                        <div
+                          className={`w-4 h-4 border-2 rounded ${selectedIds.includes(q.id) ? 'bg-blue-500 border-blue-500' : 'border-gray-300'} flex items-center justify-center`}
+                        >
+                          {selectedIds.includes(q.id) && <Check className="w-3 h-3 text-white" />}
+                        </div>
                       </div>
-                    </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{q.title}</h4>
-                      {q.description && <p className="text-sm text-gray-600 mt-1">{q.description}</p>}
+
+                      <div className="flex-1 min-w-0">
+                        <div className="flex items-center justify-between gap-3">
+                          <h4 className="font-medium text-gray-800 truncate">{q.title}</h4>
+                          <div className="text-sm text-gray-500 whitespace-nowrap">
+                            {q.marks != null && <span>{q.marks} pts</span>}
+                            {q.negative_marks != null && <span className="ml-2">({q.negative_marks} neg)</span>}
+                          </div>
+                        </div>
+
+                        {q.question && <p className="text-sm text-gray-600 mt-1 line-clamp-3">{q.question}</p>}
+
+                        {/* small metadata */}
+                        <div className="flex items-center gap-3 mt-2 text-xs text-gray-500">
+                          {q.difficulty_level && <span className="px-2 py-0.5 bg-gray-100 rounded-md">{q.difficulty_level}</span>}
+                          {q.tags && q.tags.length > 0 && <span>{q.tags.slice(0,3).join(', ')}</span>}
+                          {q.created_by && q.created_by.name && <span>by {q.created_by.name}</span>}
+                          {q.is_multiple && <span className="italic">multiple answers</span>}
+                        </div>
+
+                        {/* options */}
+                        {q.options && q.options.length > 0 && (
+                          <ul className="mt-2 space-y-1">
+                            {q.options.map((opt) => (
+                              <li key={opt.id} className="flex items-center gap-2 text-sm text-gray-700">
+                                <div className="flex items-center justify-center w-4 h-4 border rounded-sm">
+                                  {/* show a small filled circle for single-choice and checkbox-like for multiple */}
+                                  {q.is_multiple ? (
+                                    <div className="w-2 h-2" />
+                                  ) : (
+                                    <div className="w-2 h-2 rounded-full" />
+                                  )}
+                                </div>
+                                <div className="flex items-center gap-2">
+                                  <span className="truncate">{opt.text}</span>
+                                  {opt.is_correct && <Check className="w-4 h-4 text-green-600" />}
+                                </div>
+                              </li>
+                            ))}
+                          </ul>
+                        )}
+                      </div>
                     </div>
                   </div>
                 ))}

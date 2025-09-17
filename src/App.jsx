@@ -19,12 +19,14 @@ import StudentDetail from "./_Features/Students/StudentDetail";
 import Test from "./_Features/Test";
 import TestDetail from "./_Features/Test/TestDetail";
 import { privateAxios } from "./utils/axios";
-import ListMCQ from "./_Features/GlobalQuestions/MCQ";
-import ListRearrange from "./_Features/GlobalQuestions/Rearrange";
+import ListMCQ from "./_Features/GlobalQuestions/MCQ/index.jsx";
+import ListRearrange from "./_Features/GlobalQuestions/Rearrange/index.jsx";
 import ListRearrangeQuestions from "./_Features/MyQuestions/Questions/Rearrange/ListRearrange";
-import ListCoding from "./_Features/GlobalQuestions/Coding";
+// import ListCoding from "./_Features/GlobalQuestions/Coding";
+import CodingIndexPage from "./_Features/GlobalQuestions/Coding/index.jsx";
 import CodeBuilder from "./_Features/MyQuestions/Questions/Coding/CodingBuilder";
 import QuestionList from "./_Features/MyQuestions/Questions/Coding/Questions";
+import CodingList from "./_Features/Utils/Coding/CodingList.jsx";
 import CodeRunner from "./_Features/CodeRunner/index"
 import EditQuestionBuilder from "./_Features/MyQuestions/Questions/MCQ/Edit/EditQuestionBuilder"
 import AddMCQQuestion from "./_Features/MyQuestions/Questions/MCQ/AddMCQ"
@@ -53,7 +55,7 @@ const Layout = ({ children }) => {
   return (
     <div className="flex w-screen h-screen overflow-auto">
       {showSidebar && <Sidebar /> }
-      <div className={`flex-1 ${showSidebar ? "ml-12  " : "m-0 p-0"} w-full h-full overflow-auto`}>
+      <div className={`flex-1 ${showSidebar ? "ml-20 " : "m-0 p-0"} w-full h-full overflow-auto`}>
         {children}
       </div>
     </div>
@@ -61,31 +63,32 @@ const Layout = ({ children }) => {
 };
 
 function App() {
-    // useEffect(() => {
+    useEffect(() => {
    
   
      
-    //   const fetchQuestions = async () => {
-    //     try {
-    //       // GET /sections/<section_id>/questions
-    //       const resp = await privateAxios.get(`/test/questions/coding/`)
+      const fetchQuestions = async () => {
+        try {
+          // GET /sections/<section_id>/questions
+          const resp = await privateAxios.get(`/v1/coding/questions`)
   
-    //       // The backend returns a response like: { success: true, message: "...", data: [...] }
-    //       // Adjust if your backend shape differs.
-    //       const payload = resp && resp.data ? resp.data : resp;
-    //       console.log(payload)
+          // The backend returns a response like: { success: true, message: "...", data: [...] }
+          // Adjust if your backend shape differs.
+          const payload = resp && resp.data ? resp.data : resp;
+          console.log('mcq')
+          console.log(payload)
   
         
-    //     } catch (err) {
+        } catch (err) {
         
-    //           console.log(err);
+              console.log(err);
              
-    //       }
-    //   };
+          }
+      };
   
-    //   fetchQuestions();
+      fetchQuestions();
   
-    // }, []);
+    }, []);
   
   return (
     <Router>
@@ -246,7 +249,7 @@ function App() {
               path="/global/coding"
               element={
                 <ProtectedRoute>
-                  <ListCoding/>
+                  <CodingIndexPage/>
                 </ProtectedRoute>
               }
             />

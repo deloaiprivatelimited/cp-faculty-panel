@@ -1,25 +1,14 @@
 // pages/index.jsx
 import React, { useEffect, useCallback, useState } from 'react';
-import { privateAxios } from '../../../../utils/axios';
-// import CodingList from '../../../Utils/Coding/CodingList';
-import MCQList from '../../../Utils/MCQ/MCQList';
-import { useNavigate } from 'react-router-dom';
-import { showError,showSuccess } from '../../../../utils/toast';
+import { privateAxios } from '../../../utils/axios'
+import MCQList from '../../Utils/MCQ/MCQList';
+import { showError, showSuccess } from '../../../utils/toast';
 
 const IndexPage = () => {
   const [mcqData, setMcqData] = useState({ items: [], page: 1, per_page: 5, total: 0 });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-  const navigate = useNavigate();
- // Navigation handlers
-  const handleAdd = () => {
-    navigate('/questions/mcq/add');
-  };
 
-  const handleEdit = (mcq) => {
-    if (!mcq?.id) return;
-    navigate(`/questions/mcq/${mcq.id}/edit`);
-  };
   // Controlled UI state
   const [searchTerm, setSearchTerm] = useState('');
   const [selectedTopic, setSelectedTopic] = useState('');
@@ -46,7 +35,7 @@ const IndexPage = () => {
       setError(null);
       try {
         const params = buildParams();
-        const resp = await privateAxios.get('/v1/mcq/college_mcqs', { params, signal });
+        const resp = await privateAxios.get('/v1/mcq/mcqs', { params, signal });
         const data = resp.data || {};
 
         const items = Array.isArray(data.items) ? data.items : [];
@@ -103,29 +92,6 @@ const IndexPage = () => {
     setItemsPerPage(5);
     setCurrentPage(1);
   };
-  const handleDelete = async (mcq) => {
-  if (!mcq?.id) return;
-  const ok = window.confirm("Are you sure you want to delete this question?");
-  if (!ok) return;
-
-  try {
-    const resp = await privateAxios.delete(`/v1/mcq/college_mcqs/${mcq.id}`);
-    const data = resp?.data || {};
-
-    if (data.success) {
-      showSuccess(data.message || "Deleted successfully");
-      // refresh list after delete
-      fetchMCQs();
-    } else {
-      showError(data.message || "Delete failed");
-    }
-  } catch (err) {
-    console.error("Delete error", err);
-    const msg = err?.response?.data?.message || err?.message || "Failed to delete. Please try again.";
-    showError(msg);
-  }
-};
-
 
   return (
     <MCQList
@@ -155,12 +121,6 @@ const IndexPage = () => {
       onPageChange={handlePageChange}
       onItemsPerPageChange={handleItemsPerPageChange}
       onResetFilters={handleResetFilters}
-handleDelete={handleDelete}
-handleAdd={handleAdd}
-handleEdit={handleEdit}
-    editEnabled={true}
-    addEnabled={true}
-    deleteEnabled={true}
     />
   );
 };
