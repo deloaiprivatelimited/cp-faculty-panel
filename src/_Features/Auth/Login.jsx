@@ -21,7 +21,7 @@ function Login() {
       const resp = await publicAxios.post("/collegeadmin/login", { email, password });
       // Expecting shape: { token, admin, college } — adapt if different
     //   if(!resp?.success){
-    console.log(resp);
+    // console.log(resp);
       const { token, admin, college } = resp.data.data;
 
       if (!token) {

@@ -1,7 +1,8 @@
 import React, { useEffect, useState } from 'react';
 import { List, Grid, Check, X } from 'lucide-react';
 import { privateAxios } from '../../../../utils/axios';
-
+import RearrangeCard from '../../../Utils/Rearrange/RearrangeCard';
+import RearrangePreview from '../../../Utils/Rearrange/RearrangePreview';
 export type SourceType = 'library' | 'global' | null;
 
 export interface RearrangeItemPreview {
@@ -42,13 +43,15 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
 }) => {
   const [selectedSource, setSelectedSource] = useState<SourceType>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [questions, setQuestions] = useState<RearrangeQuestion[]>([]);
+  const [questions, setQuestions] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [perPage] = useState(50);
   const [total, setTotal] = useState<number | null>(null);
   const [duplicating, setDuplicating] = useState(false);
+  const [previewRearrange, setPreviewRearrange] = React.useState<RearrangeQuestion | null>(null);
+  const [isRearrangePreviewOpen, setIsRearrangePreviewOpen] = React.useState(false);
 
   useEffect(() => {
     if (!isOpen) {
@@ -83,7 +86,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
     setError(null);
     try {
       const url = buildListUrl(source, pageNum, per);
-
       const res = await privateAxios.get(url);
       const body = res.data;
       if (!body.success) throw new Error(body.message || 'Failed to fetch');
@@ -93,10 +95,15 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
         id: it.id,
         title: it.title || it.prompt || it.id,
         prompt: it.prompt || '',
-        items: (it.items || []).map((itm: any) => ({ id: itm.id || itm.item_id || String(Math.random()), value_preview: itm.value_preview, has_images: !!itm.has_images }))
+        items: (it.items || []).map((itm: any) => ({
+          id: itm.id || itm.item_id || String(Math.random()),
+          value_preview: itm.value_preview,
+          has_images: !!itm.has_images
+        }))
       }));
 
-      setQuestions(mapped);
+      // use the normalized `mapped` array (previously you set `items` here)
+      setQuestions(items);
       setTotal(body.data && body.data.meta ? body.data.meta.total : null);
     } catch (err: any) {
       console.error(err);
@@ -108,6 +115,20 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
 
   const toggleQuestion = (id: string) => {
     setSelectedIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
+  };
+
+  const selectAllOnPage = () => {
+    const idsOnPage = questions.map(q => q.id);
+    const allSelected = idsOnPage.length > 0 && idsOnPage.every(id => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !idsOnPage.includes(id)));
+    } else {
+      setSelectedIds(prev => {
+        const s = new Set(prev);
+        idsOnPage.forEach(id => s.add(id));
+        return Array.from(s);
+      });
+    }
   };
 
   const handleBack = () => {
@@ -130,8 +151,10 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
       for (const rearrId of selectedIds) {
         try {
           const url = buildDuplicateUrl(selectedSource, rearrId);
-          // section_id removed per request — send empty body
-          const res = await privateAxios.post(url, {});
+          // payload: include defaultSectionId if present
+          const payload: any = {};
+          if (defaultSectionId) payload.section_id = defaultSectionId;
+          const res = await privateAxios.post(url, payload);
           const body = res.data;
 
           if (!body.success) {
@@ -167,6 +190,15 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
   };
 
   if (!isOpen) return null;
+
+  const handleRearrangePreview = (rearrange: RearrangeQuestion) => {
+    setPreviewRearrange(rearrange);
+    setIsRearrangePreviewOpen(true);
+  };
+  const handleCloseRearrangePreview = () => {
+    setIsRearrangePreviewOpen(false);
+    setPreviewRearrange(null);
+  };
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
@@ -231,44 +263,65 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
-                <p className="text-gray-600 mb-4">Select rearrange questions from {selectedSource === 'library' ? 'Library' : 'Global'}:</p>
-                <div className="text-sm text-gray-500">{loading ? 'Loading...' : total != null ? `${total} total` : ''}</div>
+                <p className="text-gray-600 mb-4">
+                  Select rearrange questions from {selectedSource === 'library' ? 'Library' : 'Global'}:
+                </p>
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-500">{loading ? 'Loading...' : total != null ? `${total} total` : ''}</div>
+                  <button
+                    onClick={selectAllOnPage}
+                    className="text-sm px-2 py-1 border rounded hover:bg-gray-100"
+                    disabled={questions.length === 0}
+                  >
+                    Select all on page
+                  </button>
+                </div>
               </div>
 
               {error && <div className="text-sm text-red-600">{error}</div>}
 
               <div className="max-h-64 overflow-y-auto space-y-2 border border-gray-100 p-2 rounded-lg">
                 {questions.length === 0 && !loading && <div className="text-sm text-gray-500">No rearrange questions found.</div>}
-                {questions.map(q => (
-                  <div
-                    key={q.id}
-                    className="flex items-start gap-3 p-3 border border-gray-200 rounded-lg hover:bg-gray-50 cursor-pointer"
-                    onClick={() => toggleQuestion(q.id)}
-                  >
-                    <div className="flex items-center justify-center w-5 h-5 mt-0.5">
-                      <div
-                        className={`w-4 h-4 border-2 rounded ${selectedIds.includes(q.id) ? 'bg-indigo-500 border-indigo-500' : 'border-gray-300'} flex items-center justify-center`}
-                      >
-                        {selectedIds.includes(q.id) && <Check className="w-3 h-3 text-white" />}
+
+                {questions.map(q => {
+                  const isSelected = selectedIds.includes(q.id);
+                  return (
+                    <div
+                      key={q.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg transition-all border ${
+                        isSelected ? 'border-indigo-300 bg-indigo-50' : 'border-transparent hover:border-gray-200'
+                      }`}
+                    >
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleQuestion(q.id)}
+                          className="w-5 h-5 rounded-md focus:ring-0"
+                        />
+                      </label>
+
+                      <div className="flex-1">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1" onClick={() => handleRearrangePreview(q)} role="button">
+                            <RearrangeCard rearrange={q} onPreview={handleRearrangePreview} label={true} />
+                          </div>
+
+                          {isSelected ? (
+                            <div className="ml-3 flex items-center gap-1 text-sm text-indigo-700">
+                              <Check className="w-4 h-4" />
+                              <span>Selected</span>
+                            </div>
+                          ) : null}
+                        </div>
                       </div>
                     </div>
-                    <div className="flex-1">
-                      <h4 className="font-medium text-gray-800">{q.title}</h4>
-                      {q.prompt && <p className="text-sm text-gray-600 mt-1">{q.prompt}</p>}
-                      {q.items && q.items.length > 0 && (
-                        <div className="mt-2 text-xs text-gray-500 grid grid-cols-2 gap-2">
-                          {q.items.slice(0, 6).map(itm => (
-                            <div key={itm.id} className="truncate">{itm.value_preview || (itm.has_images ? 'Image item' : '...')}</div>
-                          ))}
-                        </div>
-                      )}
-                    </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="flex items-center justify-between mt-2">
-                <div className="text-sm text-gray-500">Page {page}</div>
+                <div className="text-sm text-gray-500">Page {page} — {selectedIds.length} selected</div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPage(p => Math.max(1, p - 1))}
@@ -308,6 +361,8 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
           )}
         </div>
       </div>
+
+      <RearrangePreview rearrange={previewRearrange} isOpen={isRearrangePreviewOpen} onClose={handleCloseRearrangePreview} />
     </div>
   );
 };

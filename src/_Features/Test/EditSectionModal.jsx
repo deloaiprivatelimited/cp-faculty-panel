@@ -5,12 +5,14 @@ import { privateAxios } from "../../utils/axios";
 import { showError, showSuccess } from "../../utils/toast";
 
 const EditSectionModal = ({ section = {}, onClose, onSave }) => {
+  console.log('sectionsadas')
+  console.log(section)
   const [formData, setFormData] = useState({
     name: section.name || "",
     description: section.description || "",
     instructions: section.instructions || "",
     duration: section.duration ?? 30,
-    isTimeConstrained: !!section.isTimeConstrained,
+    time_restricted: !!section.time_restricted,
   });
   const [loading, setLoading] = useState(false);
 
@@ -24,11 +26,11 @@ const EditSectionModal = ({ section = {}, onClose, onSave }) => {
         name: formData.name,
         description: formData.description,
         instructions: formData.instructions,
-        time_restricted: !!formData.isTimeConstrained,
+        time_restricted: !!formData.time_restricted,
       };
 
       // include duration only when time constrained (optional on backend)
-      if (formData.isTimeConstrained && Number.isFinite(formData.duration)) {
+      if (formData.time_restricted && Number.isFinite(formData.duration)) {
         payload.duration = formData.duration;
       }
 
@@ -133,8 +135,8 @@ const EditSectionModal = ({ section = {}, onClose, onSave }) => {
             <label className="flex items-center gap-3">
               <input
                 type="checkbox"
-                name="isTimeConstrained"
-                checked={formData.isTimeConstrained}
+                name="time_restricted"
+                checked={formData.time_restricted}
                 onChange={handleChange}
                 className="w-4 h-4 text-[#4CA466] border-gray-300 rounded"
               />
@@ -142,7 +144,7 @@ const EditSectionModal = ({ section = {}, onClose, onSave }) => {
             </label>
           </div>
 
-          {formData.isTimeConstrained && (
+          {formData.time_restricted && (
             <div>
               <label className="block text-sm font-medium text-gray-700 mb-2">Duration (minutes)</label>
               <input

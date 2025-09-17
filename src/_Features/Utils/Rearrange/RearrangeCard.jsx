@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, BookOpen, Award, Eye, List, Edit2, Trash2 } from 'lucide-react';
+import { Clock, BookOpen, Award, Eye, List, Edit2, Trash2,Shuffle } from 'lucide-react';
 
 const RearrangeCard = ({
   rearrange,
@@ -8,6 +8,8 @@ const RearrangeCard = ({
   handleEdit = (rearrange) => {},
   deleteEnabled =false,
   handleDelete = (rearrange) => {},
+    label = false, // new prop with default false
+
 }) => {
   const getDifficultyColor = (difficulty) => {
     if (!difficulty) return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -25,7 +27,15 @@ const RearrangeCard = ({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
-      <div className="flex gap-6">
+     
+      {label && (
+        <div className="flex items-center gap-2 mb-3">
+          <Shuffle className="w-4 h-4 text-purple-600" />
+          <span className="text-xs font-medium text-purple-600 uppercase tracking-wide">
+            Rearrange
+          </span>
+        </div>
+      )} <div className="flex gap-6">
         {/* Left Section - Main Content */}
         <div className="flex-1">
           <div className="flex justify-between items-start mb-3">

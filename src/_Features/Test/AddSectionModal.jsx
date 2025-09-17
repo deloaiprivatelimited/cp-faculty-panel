@@ -26,7 +26,7 @@ const AddSectionModal = ({ testId, onClose, onAdd }) => {
         instructions: formData.instructions,
         time_restricted: !!formData.isTimeConstrained,
         // you may want to store duration somewhere server-side if applicable
-        // duration: formData.duration
+        duration: formData.duration
       };
 
       const res = await privateAxios.post(`/tests/${testId}/sections`, payload);

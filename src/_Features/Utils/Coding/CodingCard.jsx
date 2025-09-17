@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, BookOpen, Award, Eye, Code, Cpu, Trash2, Edit2 } from 'lucide-react';
+import { Clock, BookOpen, Award, Eye, Code, Cpu,Terminal, Trash2, Edit2 } from 'lucide-react';
 
 const CodingCard = ({
   coding,
@@ -8,6 +8,7 @@ const CodingCard = ({
   handleEdit = (coding) => {},
   deleteEnabled = false,
   handleDelete = (coding) => {},
+  label=false
 }) => {
   const getDifficultyColor = (difficulty) => {
     if (!difficulty) return 'bg-gray-100 text-gray-800 border-gray-200';
@@ -25,6 +26,15 @@ const CodingCard = ({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
+     {label && (
+  <div className="flex items-center gap-2 mb-3">
+    <Terminal className="w-4 h-4 text-emerald-600" />
+    <span className="text-xs font-medium text-emerald-600 uppercase tracking-wide">
+      Coding
+    </span>
+  </div>
+)}
+
       <div className="flex gap-6">
         {/* Left Section - Main Content */}
         <div className="flex-1">

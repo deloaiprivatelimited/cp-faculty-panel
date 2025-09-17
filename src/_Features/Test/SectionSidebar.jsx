@@ -7,12 +7,14 @@ const SectionSidebar = ({
   selectedSection,
   onSectionSelect,
   onSectionEdit,
-  onAdd
+  onAdd,
+  test
 }) => {
   const SectionItem = ({ section }) => {
     const isSelected = selectedSection?.id === section.id;
     const timeRestricted = !!(section.time_restricted || section.isTimeConstrained);
-
+//     console.log('sec')
+// console.log(section)
     return (
       <div
         role="button"
@@ -97,7 +99,7 @@ const SectionSidebar = ({
               <span className={`w-1.5 h-1.5 rounded-full ${
                 isSelected ? 'bg-white/60' : 'bg-[#4CA466]'
               }`} />
-              {(section.questions || []).length} questions
+              {section.no_of_questions} questions
             </span>
             
             {timeRestricted && (
@@ -151,12 +153,12 @@ const SectionSidebar = ({
       </div>
     </div>
   );
-
+  console.log(timedSections)
   return (
     <div className="h-screen flex flex-col bg-gradient-to-b from-gray-50 to-white border-r border-gray-200 fixed left-0 top-0 w-80">
       <div className="p-6 border-b border-gray-200 bg-white">
-        <h2 className="text-lg font-bold text-gray-900 mb-1">Assessment Sections</h2>
-        <p className="text-xs text-gray-500">Organize your questions by category</p>
+        <h2 className="text-lg font-bold text-gray-900 mb-1">{test.test_name}</h2>
+        <p className="text-xs text-gray-500">{test.description}</p>
       </div>
 
       <div className="flex-1 overflow-hidden flex flex-col p-6 gap-8">

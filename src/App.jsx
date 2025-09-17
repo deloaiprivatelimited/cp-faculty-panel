@@ -70,12 +70,12 @@ function App() {
       const fetchQuestions = async () => {
         try {
           // GET /sections/<section_id>/questions
-          const resp = await privateAxios.get(`/v1/coding/questions`)
+          const resp = await privateAxios.get(`/test/assignments/students/academic`)
   
           // The backend returns a response like: { success: true, message: "...", data: [...] }
           // Adjust if your backend shape differs.
           const payload = resp && resp.data ? resp.data : resp;
-          console.log('mcq')
+          console.log('students')
           console.log(payload)
   
         
