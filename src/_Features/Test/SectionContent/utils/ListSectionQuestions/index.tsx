@@ -1,19 +1,23 @@
 import React, { useEffect, useState } from 'react';
 import { Question, MCQData, RearrangeData, CodingData } from './types/questionTypes';
-import { MCQCard } from './components/cards/MCQCard';
-import { RearrangeCard } from './components/cards/RearrangeCard';
-import { CodingCard } from './components/cards/CodingCard';
-import { MCQPreview } from './components/previews/MCQPreview';
-import { RearrangePreview } from './components/previews/RearrangePreview';
-import { CodingPreview } from './components/previews/CodingPreview';
+// import { MCQCard } from './components/cards/MCQCard';
+import MCQCard from '../../../../Utils/MCQ/MCQCard';
+import RearrangeCard from '../../../../Utils/Rearrange/RearrangeCard'
+// import { RearrangeCard } from './components/cards/RearrangeCard';
+// import { CodingCard } from './components/cards/CodingCard';
+// import { MCQPreview } from './components/previews/MCQPreview';
+// import { RearrangePreview } from './components/previews/RearrangePreview';
+// import { CodingPreview } from './components/previews/CodingPreview';
 import { BookOpen, FileText, Code, Move, RotateCw } from 'lucide-react';
 import { privateAxios } from '../../../../../utils/axios';
-
+import MCQPreview from '../../../../Utils/MCQ/MCQPreview';
+import CodingCard from '../../../../Utils/Coding/CodingCard'
+import CodingPreview from "../../../../Utils/Coding/CodingPreview"
 // NEW: selector imports (re-use your existing selector utils)
 import SelectMCQ, { Question as SelectQuestion, SourceType as SelectSourceType } from '../selectMCQ';
 import SelectRearrange from '../selectRearrange';
 import SelectCoding from '../selectCoding';
-
+import RearrangePreview from '../../../../Utils/Rearrange/RearrangePreview';
 type QuestionType = 'all' | 'coding' | 'mcq' | 'rearrange';
 type SelectorType = 'mcq' | 'rearrange' | 'coding' | null;
 type SourceType = 'library' | 'global' | null;
@@ -32,7 +36,13 @@ function ListQuestionCards({ section }: { section: any }) {
     source: SourceType;
     selectedQuestions: { id: string; title: string; description?: string }[];
   } | null>(null);
+  const [previewMCQ, setPreviewMCQ] = React.useState(null);
+  const [isMCQPreviewOpen, setIsMCQPreviewOpen] = React.useState(false);
+  const [previewRearrange, setPreviewRearrange] = React.useState(null);
+  const [isRearrangePreviewOpen, setIsRearrangePreviewOpen] = React.useState(false);
 
+  const [previewCoding, setPreviewCoding] = React.useState(null);
+  const [isCodingPreviewOpen, setIsCodingPreviewOpen] = React.useState(false);
   // Fetch questions (existing logic preserved)
   useEffect(() => {
     if (!section || !section.id) {
@@ -84,38 +94,78 @@ function ListQuestionCards({ section }: { section: any }) {
       if (source) source.cancel('Operation cancelled by the user.');
     };
   }, [section && section.id]);
+ const handleMCQPreview = (mcq) => {
+    setPreviewMCQ(mcq);
+    setIsMCQPreviewOpen(true);
+  };
+  const handleCloseMCQPreview = () => {
+    setIsMCQPreviewOpen(false);
+    setPreviewMCQ(null);
+  };
+   const handleCodingPreview = (coding) => {
+    setPreviewCoding(coding);
+    setIsCodingPreviewOpen(true);
+  };
+  const handleCloseCodingPreview = () => {
+    setIsCodingPreviewOpen(false);
+    setPreviewCoding(null);
+  };
 
+
+   const handleRearrangePreview = (rearrange) => {
+    setPreviewRearrange(rearrange);
+    setIsRearrangePreviewOpen(true);
+  };
+  const handleCloseRearrangePreview = () => {
+    setIsRearrangePreviewOpen(false);
+    setPreviewRearrange(null);
+  };
   // Render cards (unchanged)
   const renderQuestionCard = (question: any, index: number) => {
+    // console.log('card')
+    // console.log(question)
     const key = (question as any).id ?? `${question.type}-${index}`;
     switch (question.type) {
       case 'mcq':
         return (
-          <div key={key} className="w-full">
+         
             <MCQCard
-              data={question.data as MCQData}
-              onPreview={() => setSelectedQuestion(question)}
+            key={question.data.id}
+            mcq={question.data}
+            onPreview={handleMCQPreview}
+                        label={true}
+
             />
-          </div>
+       
         );
       case 'rearrange':
+        // console.log('rearange card')
+        // console.log(question.data)
         return (
           <div key={key} className="w-full">
             <RearrangeCard
-              data={question.data as RearrangeData}
-              onPreview={() => setSelectedQuestion(question)}
+            key={question.data.id}
+            rearrange={question.data}
+            onPreview={handleRearrangePreview}
+            label={true}
             />
           </div>
         );
       case 'coding': {
+        // console.log(question.data)
+        // console.log('codinf')
         const codingData: CodingData = typeof question.data === 'string'
           ? JSON.parse(question.data)
           : (question.data as CodingData);
+          // console.log(codingData)
         return (
           <div key={key} className="w-full">
             <CodingCard
-              data={codingData}
-              onPreview={() => setSelectedQuestion(question)}
+                key={question.data.id}
+            coding={question.data}
+            onPreview={handleCodingPreview}
+                        label={true}
+
             />
           </div>
         );
@@ -126,39 +176,39 @@ function ListQuestionCards({ section }: { section: any }) {
   };
 
   // Previews (unchanged)
-  const renderPreview = () => {
-    if (!selectedQuestion) return null;
+  // const renderPreview = () => {
+  //   if (!selectedQuestion) return null;
 
-    switch (selectedQuestion.type) {
-      case 'mcq':
-        return (
-          <MCQPreview
-            data={selectedQuestion.data as MCQData}
-            onClose={() => setSelectedQuestion(null)}
-          />
-        );
-      case 'rearrange':
-        return (
-          <RearrangePreview
-            data={selectedQuestion.data as RearrangeData}
-            onClose={() => setSelectedQuestion(null)}
-          />
-        );
-      case 'coding': {
-        const codingData: CodingData = typeof selectedQuestion.data === 'string'
-          ? JSON.parse(selectedQuestion.data)
-          : (selectedQuestion.data as CodingData);
-        return (
-          <CodingPreview
-            data={codingData}
-            onClose={() => setSelectedQuestion(null)}
-          />
-        );
-      }
-      default:
-        return null;
-    }
-  };
+  //   switch (selectedQuestion.type) {
+  //     case 'mcq':
+  //       return (
+  //         <MCQPreview
+  //           data={selectedQuestion.data as MCQData}
+  //           onClose={() => setSelectedQuestion(null)}
+  //         />
+  //       );
+  //     case 'rearrange':
+  //       return (
+  //         <RearrangePreview
+  //           data={selectedQuestion.data as RearrangeData}
+  //           onClose={() => setSelectedQuestion(null)}
+  //         />
+  //       );
+  //     case 'coding': {
+  //       const codingData: CodingData = typeof selectedQuestion.data === 'string'
+  //         ? JSON.parse(selectedQuestion.data)
+  //         : (selectedQuestion.data as CodingData);
+  //       return (
+  //         <CodingPreview
+  //           data={codingData}
+  //           onClose={() => setSelectedQuestion(null)}
+  //         />
+  //       );
+  //     }
+  //     default:
+  //       return null;
+  //   }
+  // };
 
   // Counts helper
   const getQuestionCounts = () => {
@@ -230,45 +280,45 @@ function ListQuestionCards({ section }: { section: any }) {
   };
 
   // Render small selected-component summary UI (so user sees what was added)
-  const renderSelectedComponentSummary = () => {
-    if (!selectedComponent) return null;
-    const { type, source, selectedQuestions } = selectedComponent;
-    const TitleIcon = type === 'mcq' ? FileText : type === 'rearrange' ? RotateCw : Code;
+  // const renderSelectedComponentSummary = () => {
+  //   if (!selectedComponent) return null;
+  //   const { type, source, selectedQuestions } = selectedComponent;
+  //   const TitleIcon = type === 'mcq' ? FileText : type === 'rearrange' ? RotateCw : Code;
 
-    return (
-      <div className="mb-6 mt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between mb-4">
-          <h2 className="text-lg font-semibold text-gray-900">Recently Added</h2>
-          <button
-            onClick={() => setSelectedComponent(null)}
-            className="px-3 py-1 text-sm rounded-lg transition-colors border"
-          >
-            Clear
-          </button>
-        </div>
-        <div className="rounded-xl p-6 border bg-white">
-          <div className="rounded-lg p-4 border-l-4 mb-4 flex items-center gap-3" style={{ borderColor: '#4CA466' }}>
-            <div className="p-2" style={{ backgroundColor: '#F2FBF6', borderRadius: 8 }}>
-              <TitleIcon className="w-6 h-6" style={{ color: '#4CA466' }} />
-            </div>
-            <div>
-              <h3 className="text-lg font-semibold text-gray-900 capitalize">{type} added</h3>
-              <p className="text-sm text-gray-500">{source ?? '—'}</p>
-            </div>
-          </div>
+  //   return (
+  //     <div className="mb-6 mt-6 max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+  //       <div className="flex items-center justify-between mb-4">
+  //         <h2 className="text-lg font-semibold text-gray-900">Recently Added</h2>
+  //         <button
+  //           onClick={() => setSelectedComponent(null)}
+  //           className="px-3 py-1 text-sm rounded-lg transition-colors border"
+  //         >
+  //           Clear
+  //         </button>
+  //       </div>
+  //       <div className="rounded-xl p-6 border bg-white">
+  //         <div className="rounded-lg p-4 border-l-4 mb-4 flex items-center gap-3" style={{ borderColor: '#4CA466' }}>
+  //           <div className="p-2" style={{ backgroundColor: '#F2FBF6', borderRadius: 8 }}>
+  //             <TitleIcon className="w-6 h-6" style={{ color: '#4CA466' }} />
+  //           </div>
+  //           <div>
+  //             <h3 className="text-lg font-semibold text-gray-900 capitalize">{type} added</h3>
+  //             <p className="text-sm text-gray-500">{source ?? '—'}</p>
+  //           </div>
+  //         </div>
 
-          <div className="space-y-3">
-            {selectedQuestions.map(q => (
-              <div key={q.id} className="p-3 rounded-lg bg-green-50">
-                <h4 className="font-medium text-gray-900">{q.title}</h4>
-                {q.description && <p className="text-sm text-gray-600 mt-1">{q.description}</p>}
-              </div>
-            ))}
-          </div>
-        </div>
-      </div>
-    );
-  };
+  //         <div className="space-y-3">
+  //           {selectedQuestions.map(q => (
+  //             <div key={q.id} className="p-3 rounded-lg bg-green-50">
+  //               <h4 className="font-medium text-gray-900">{q.title}</h4>
+  //               {q.description && <p className="text-sm text-gray-600 mt-1">{q.description}</p>}
+  //             </div>
+  //           ))}
+  //         </div>
+  //       </div>
+  //     </div>
+  //   );
+  // };
 
   // -----------------------------------------
 
@@ -355,7 +405,7 @@ function ListQuestionCards({ section }: { section: any }) {
       </div>
 
       {/* Recently added summary */}
-      {renderSelectedComponentSummary()}
+      {/* {renderSelectedComponentSummary()} */}
 
       {/* Content */}
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
@@ -382,7 +432,7 @@ function ListQuestionCards({ section }: { section: any }) {
         )}
       </div>
 
-      {renderPreview()}
+      {/* {renderPreview()} */}
 
       {/* ---------- Render selectors as modals ---------- */}
       {selectorType === 'mcq' && (
@@ -414,6 +464,10 @@ function ListQuestionCards({ section }: { section: any }) {
           apiBase={''}
         />
       )}
+            <MCQPreview mcq={previewMCQ} isOpen={isMCQPreviewOpen} onClose={handleCloseMCQPreview} />
+            <RearrangePreview rearrange={previewRearrange} isOpen={isRearrangePreviewOpen} onClose={handleCloseRearrangePreview} />
+            <CodingPreview coding={previewCoding} isOpen={isCodingPreviewOpen} onClose={handleCloseCodingPreview} />
+
     </div>
   );
 }

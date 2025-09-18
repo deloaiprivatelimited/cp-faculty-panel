@@ -10,7 +10,7 @@ import AssignStudentsModal from './AssignStudentsModal.jsx';
 import { useParams } from 'react-router-dom';
 import { privateAxios } from '../../utils/axios.js'; // adjust path as needed
 import ListQuestionCards from './SectionContent/utils/ListSectionQuestions/index.tsx';
-
+import { showError } from '../../utils/toast.js';
 const FullPageLoader = ({ message = 'Loading...' }) => (
   <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
     <div className="flex flex-col items-center gap-4">
@@ -30,7 +30,7 @@ const TestDetail = ({
   assignedStudents = [],
   onBack = () => {},
   onTestUpdate = () => {},
-  onStudentAssignment = () => {}
+
 }) => {
   const { testId } = useParams();
 
@@ -46,6 +46,72 @@ const TestDetail = ({
   const [isEditTestModalOpen, setIsEditTestModalOpen] = useState(false);
   const [isAssignStudentsModalOpen, setIsAssignStudentsModalOpen] = useState(false);
   const [sectionToEdit, setSectionToEdit] = useState(null);
+// inside TestDetail.jsx — replace the current handleAssign definition with this:
+
+const handleAssign = async (studentIds) => {
+  if (!studentIds || !studentIds.length) {
+    showError('No students selected to assign.');
+    return;
+  }
+
+  if (!test || !test.id) {
+    showError('Test not loaded. Cannot assign students.');
+    return;
+  }
+
+  try {
+    setUpdating(true);
+
+    // Build payload expected by your Flask route
+    const payload = {
+      test_id: String(test.id),
+      student_ids: studentIds.map(s => String(s)),
+    };
+
+    // Add Authorization header manually if privateAxios is not preconfigured with auth
+    const headers = {};
+    const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+    if (token) {
+      headers.Authorization = `Bearer ${token}`;
+    }
+
+    const res = await privateAxios.post('/test/assignments/bulk_assign', payload, { headers });
+
+    // response structure: response(True, "bulk assign complete", summary)
+    // your axios response likely in res.data (adjust if different)
+    const serverData = res?.data ?? res;
+    console.log('Bulk assign response:', serverData);
+
+    // Basic UX: show success summary (switch to your toast system if available)
+    const summary = serverData?.data ?? serverData;
+    if (serverData?.success === true || (summary && (summary.created || summary.skipped || summary.errors !== undefined))) {
+      // close modal
+      setIsAssignStudentsModalOpen(false);
+
+      // optional: give a quick summary to the user
+      const created = summary.created ?? 0;
+      const skipped = summary.skipped ?? 0;
+      const errors = summary.errors ?? 0;
+      showError(`Assigned: ${created} created, ${skipped} skipped, ${errors} errors.`);
+
+      // optionally refresh sections/tests or assignedStudents list
+      // if server returns updated test/assignments, fetch it here:
+      // await fetchSections(test.id);
+
+      // If parent expects callback, call it (you have handleAssign prop?):
+      // onTestUpdate?.(updatedTest); // only if you have new test data
+    } else {
+      // If server responded but not marked as success
+      showError('Assignment completed but server returned an unexpected response. Check console for details.');
+    }
+  } catch (err) {
+    console.error('Error assigning students:', err);
+    const msg = err?.response?.data?.message ?? err?.message ?? 'Failed to assign students';
+    showError(`Assign failed: ${msg}`);
+  } finally {
+    setUpdating(false);
+  }
+};
 
   const combinedServerSections = [
     ...(sectionsTimeRestricted || []),
@@ -60,8 +126,8 @@ const TestDetail = ({
       const res = await privateAxios.get(`/tests/${id}/sections`);
 
       const data = res.data && res.data.data ? res.data.data : res.data;
-      console.log('sections')
-      console.log(data)
+      // console.log('sections')
+      // console.log(data)
       const timeList = data.sections_time_restricted || [];
       const openList = data.sections_open || [];
       setSectionsTimeRestricted(timeList);
@@ -253,6 +319,7 @@ const TestDetail = ({
             onAdd={() => setIsAddSectionModalOpen(true)}
             loading={loadingSections}
             error={sectionsError}
+          test={test}
             // pass primary color down if sidebar supports a prop for custom colors (optional)
           />
         </div>
@@ -339,12 +406,13 @@ const TestDetail = ({
       )}
 
       {isAssignStudentsModalOpen && (
-        <AssignStudentsModal
-          students={students}
-          assignedStudents={assignedStudents}
-          testName={test?.name}
+       
+            <AssignStudentsModal
+          testId={test.id}
+          testName={test.name}
+          isOpen={isAssignStudentsModalOpen}
           onClose={() => setIsAssignStudentsModalOpen(false)}
-          onAssign={onStudentAssignment}
+          onAssign={handleAssign}
         />
       )}
     </div>

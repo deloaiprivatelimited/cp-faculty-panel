@@ -381,7 +381,6 @@ export default function TestDashboard({
                   >
                     <TestCard
                       test={test}
-                      assignedStudentCount={0}
                       onClick={() => window.open(`/test/${test.id}/testbuilder`, "_blank")}
                       onEdit={(t) => handleOpenEdit(t)}
                     />

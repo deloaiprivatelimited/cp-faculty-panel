@@ -1,9 +1,19 @@
+<<<<<<< HEAD
 import React, { useEffect, useState } from "react";
 import { BookOpen, Globe, Check, X } from "lucide-react";
 import { privateAxios } from "../../../../utils/axios";
 
 export type SourceType = "library" | "global" | null;
 
+=======
+import React, { useEffect, useState } from 'react';
+import { BookOpen, Globe, Check, X } from 'lucide-react';
+// import { privateAxios } from "../path/to/axiosConfig"; // adjust the import path
+import { privateAxios } from '../../../../utils/axios';
+export type SourceType = 'library' | 'global' | null;
+import MCQCard from '../../../Utils/MCQ/MCQCard';
+import MCQPreview from '../../../Utils/MCQ/MCQPreview';
+>>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
 export interface Option {
   id: string;
   text: string;
@@ -147,6 +157,7 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
 
       const items = (body.data && body.data.items) || [];
 
+<<<<<<< HEAD
       const mapped: Question[] = items.map((it: any) => ({
         id: it.id,
         title: it.title || it.question || it.question_text || "",
@@ -163,15 +174,26 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
           : [],
         marks: it.marks ?? null,
         negative_marks: it.negative_marks ?? null,
+=======
+      // normalize shape (optional)
+      const mapped: Question[] = items.map((it: any) => ({
+        id: it.id,
+        title: it.title || it.question || it.id,
+        question: it.question || it.description || '',
+        description: it.description || '',
+        options: it.options || [],
+        marks: typeof it.marks !== 'undefined' ? it.marks : null,
+        negative_marks: typeof it.negative_marks !== 'undefined' ? it.negative_marks : null,
+>>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
         is_multiple: !!it.is_multiple,
-        difficulty_level: it.difficulty_level,
+        difficulty_level: it.difficulty_level || it.difficulty || '',
         tags: it.tags || [],
         topic: it.topic,
         subtopic: it.subtopic,
         created_by: it.created_by || null,
       }));
 
-      setQuestions(mapped);
+      setQuestions(items);
       setTotal(body.data && body.data.meta ? body.data.meta.total : null);
     } catch (err: any) {
       console.error(err);
@@ -208,6 +230,21 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
     );
   };
 
+  const selectAllOnPage = () => {
+    const idsOnPage = questions.map(q => q.id);
+    // if everything on page already selected, deselect them; otherwise select them
+    const allSelected = idsOnPage.every(id => selectedIds.includes(id));
+    if (allSelected) {
+      setSelectedIds(prev => prev.filter(id => !idsOnPage.includes(id)));
+    } else {
+      setSelectedIds(prev => {
+        const set = new Set(prev);
+        idsOnPage.forEach(id => set.add(id));
+        return Array.from(set);
+      });
+    }
+  };
+
   const handleBack = () => {
     setSelectedSource(null);
     setSelectedIds([]);
@@ -226,8 +263,19 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
     try {
       for (const mcqId of selectedIds) {
         try {
+<<<<<<< HEAD
           const url = buildDuplicateUrl(selectedSource, mcqId);
           const res = await privateAxios.post(url, {});
+=======
+                    const url = buildDuplicateUrl(selectedSource, mcqId);
+
+          const payload: any = {};
+if (defaultSectionId) payload.section_id = defaultSectionId;
+// If you might later allow per-MCQ section override, set it here per item.
+const res = await privateAxios.post(url, payload);
+          // section_id removed as requested. Sending empty body.
+          // const res = await privateAxios.post(url, {});
+>>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
           const body = res.data;
 
           if (!body.success) {
@@ -271,9 +319,25 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
 
   if (!isOpen) return null;
 
+  const [previewMCQ, setPreviewMCQ] = React.useState<Question | null>(null);
+  const [isMCQPreviewOpen, setIsMCQPreviewOpen] = React.useState(false);
+  const handleMCQPreview = (mcq: Question) => {
+    setPreviewMCQ(mcq);
+    setIsMCQPreviewOpen(true);
+  };
+  const handleCloseMCQPreview = () => {
+    setIsMCQPreviewOpen(false);
+    setPreviewMCQ(null);
+  };
+console.log(defaultSectionId)
   return (
+<<<<<<< HEAD
     <div className="fixed inset-0 bg-black/70 bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4">
+=======
+    <div className="fixed inset-0 bg-black bg-opacity-40 flex items-center justify-center z-50">
+      <div className="bg-white rounded-xl shadow-2xl max-w-6xl w-full mx-4">
+>>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
         <div className="flex items-center justify-between p-6 border-b border-gray-200">
           <div className="flex items-center gap-3">
             <div className="p-2 bg-blue-50 rounded-md">
@@ -347,6 +411,7 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
           ) : (
             <div className="space-y-4">
               <div className="flex items-center justify-between">
+<<<<<<< HEAD
                 <p className="text-gray-600 mb-4">
                   Select questions from{" "}
                   {selectedSource === "library" ? "Library" : "Global"}:
@@ -357,6 +422,18 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
                     : total != null
                     ? `${total} total`
                     : ""}
+=======
+                <p className="text-gray-600 mb-4">Select questions from {selectedSource === 'library' ? 'Library' : 'Global'}:</p>
+                <div className="flex items-center gap-4">
+                  <div className="text-sm text-gray-500">{loading ? 'Loading...' : total != null ? `${total} total` : ''}</div>
+                  <button
+                    onClick={selectAllOnPage}
+                    className="text-sm px-2 py-1 border rounded hover:bg-gray-100"
+                    disabled={questions.length === 0}
+                  >
+                    Select all on page
+                  </button>
+>>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
                 </div>
               </div>
 
@@ -422,6 +499,7 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
               </div>
 
               <div className="max-h-64 overflow-y-auto space-y-2 border border-gray-100 p-2 rounded-lg">
+<<<<<<< HEAD
                 {questions.length === 0 && !loading && (
                   <div className="text-sm text-gray-500">No questions found.</div>
                 )}
@@ -460,8 +538,42 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
                                 ({q.negative_marks} neg)
                               </span>
                             )}
+=======
+                {questions.length === 0 && !loading && <div className="text-sm text-gray-500">No questions found.</div>}
+
+                {questions.map(q => {
+                  const isSelected = selectedIds.includes(q.id);
+                  return (
+                    <div
+                      key={q.id}
+                      className={`flex items-start gap-3 p-3 rounded-lg transition-all border ${
+                        isSelected ? 'border-blue-300 bg-blue-50' : 'border-transparent hover:border-gray-200'
+                      }`}
+                    >
+                      <label className="flex items-center gap-2 cursor-pointer select-none">
+                        <input
+                          type="checkbox"
+                          checked={isSelected}
+                          onChange={() => toggleQuestion(q.id)}
+                          className="w-5 h-5 rounded-md focus:ring-0"
+                        />
+                      </label>
+
+                      <div className="flex-1" onClick={() => handleMCQPreview(q)} role="button">
+                        <div className="flex items-center justify-between">
+                          <div className="flex-1">
+                            <MCQCard mcq={q} onPreview={handleMCQPreview} label={true} />
+>>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
                           </div>
+
+                          {isSelected ? (
+                            <div className="ml-3 flex items-center gap-1 text-sm text-blue-700">
+                              <Check className="w-4 h-4" />
+                              <span>Selected</span>
+                            </div>
+                          ) : null}
                         </div>
+<<<<<<< HEAD
 
                         {q.question && (
                           <p className="text-sm text-gray-600 mt-1 line-clamp-3">
@@ -520,14 +632,16 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
                             ))}
                           </ul>
                         )}
+=======
+>>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
                       </div>
                     </div>
-                  </div>
-                ))}
+                  );
+                })}
               </div>
 
               <div className="flex items-center justify-between mt-2">
-                <div className="text-sm text-gray-500">Page {page}</div>
+                <div className="text-sm text-gray-500">Page {page} — {selectedIds.length} selected</div>
                 <div className="flex gap-2">
                   <button
                     onClick={() => setPage((p) => Math.max(1, p - 1))}
@@ -569,6 +683,8 @@ const SelectMCQ: React.FC<SelectMCQProps> = ({
           )}
         </div>
       </div>
+
+      <MCQPreview mcq={previewMCQ} isOpen={isMCQPreviewOpen} onClose={handleCloseMCQPreview} />
     </div>
   );
 };

@@ -75,8 +75,8 @@ const CodingPreview = ({ coding, isOpen, onClose }) => {
   const onBackdropClick = (e) => {
     if (e.target === backdropRef.current) onClose();
   };
-console.log('coding')
-console.log(coding)
+// console.log('coding')
+// console.log(coding)
   return (
     <div
       ref={backdropRef}

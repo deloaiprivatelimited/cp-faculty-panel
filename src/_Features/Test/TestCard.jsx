@@ -1,222 +1,118 @@
-import React from "react";
-import { Calendar, Clock, FileText, Users, Edit } from "lucide-react";
+import React from 'react';
+import { Clock, Users, FileText, Tag, Edit, Settings } from 'lucide-react';
 
-/**
- * TestCard
- *
- * Props:
- *  - test: object (may include start_datetime, end_datetime, duration_seconds,
- *          duration_hms, total_sections, sections, sections_time_restricted, sections_open)
- *  - assignedStudentCount: number
- *  - onClick: function
- *
- * Behavior:
- *  - Shows separate start date/time and end date/time in 12-hour format
- *  - Shows duration (prefers duration_seconds from backend; falls back to end-start)
- *  - Shows number of sections (prefer total_sections, else sum of time_restricted/open, else sections.length)
- */
-const TestCard = ({ test = {}, assignedStudentCount = 0, onClick, onEdit }) => {
-  // safe destructuring with sensible defaults
-  const {
-    id = "",
-    test_name = "Untitled Test",
-    description = "No description provided",
-    notes = "",
-    start_datetime,
-    end_datetime,
-    status: providedStatus = null,
-    sections = [],
-    total_sections = null,
-    sections_time_restricted = null,
-    sections_open = null,
-    duration_seconds: backend_duration_seconds = null,
-  } = test;
-
-  // trim stray whitespace in test name
-  const title = (test_name || "").toString().trim();
-
-  // helper to format date/time in 12-hour format
-  const formatDateTime = (dateTime) => {
-    if (!dateTime) return { date: "N/A", time: "N/A", iso: null, epoch: null };
-    const date = new Date(dateTime);
-    const optionsDate = { year: "numeric", month: "short", day: "2-digit", timeZone: "Asia/Kolkata" };
-    const optionsTime = { 
-      hour: "2-digit", 
-      minute: "2-digit", 
-      timeZone: "Asia/Kolkata", 
-      hour12: true 
-    };
-    return {
-      date: date.toLocaleDateString("en-GB", optionsDate),
-      time: date.toLocaleTimeString("en-GB", optionsTime),
-      iso: date.toISOString(),
-      epoch: date.getTime(),
-    };
+const TestCard = ({ test, onClick,onEdit }) => {
+  const formatDuration = (seconds) => {
+    const hours = Math.floor(seconds / 3600);
+    const minutes = Math.floor((seconds % 3600) / 60);
+    const remainingSeconds = seconds % 60;
+    
+    const parts = [];
+    if (hours > 0) parts.push(`${hours}h`);
+    if (minutes > 0) parts.push(`${minutes}m`);
+    if (remainingSeconds > 0) parts.push(`${remainingSeconds}s`);
+    
+    return parts.length > 0 ? parts.join(' ') : '0s';
   };
 
-  const startFormatted = formatDateTime(start_datetime);
-  const endFormatted = formatDateTime(end_datetime);
+  const formatDateTime = (dateTimeString) => {
+    const date = new Date(dateTimeString);
+    return date.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric',
+      hour: '2-digit',
+      minute: '2-digit'
+    });
+  };
 
-  // compute derived status if backend didn't provide one
-  const now = Date.now();
-  let status = providedStatus;
-  if (!status) {
-    if (startFormatted.epoch && endFormatted.epoch) {
-      if (now < startFormatted.epoch) status = "upcoming";
-      else if (now >= startFormatted.epoch && now <= endFormatted.epoch) status = "ongoing";
-      else status = "past";
+  const getTestStatus = () => {
+    const now = new Date();
+    const startDate = new Date(test.start_datetime);
+    const endDate = new Date(test.end_datetime);
+    
+    if (now < startDate) {
+      return { status: 'upcoming', color: 'bg-blue-100 text-blue-800 border-blue-200' };
+    } else if (now >= startDate && now <= endDate) {
+      return { status: 'active', color: 'bg-green-100 text-green-800 border-green-200' };
     } else {
-      status = "unknown";
+      return { status: 'ended', color: 'bg-gray-100 text-gray-800 border-gray-200' };
     }
-  }
-
-  const statusColors = {
-    upcoming: "bg-blue-50 text-blue-700 border-blue-200",
-    ongoing: "bg-emerald-50 text-emerald-700 border-emerald-200",
-    past: "bg-red-50 text-red-600 border-red-200",
-    unknown: "bg-amber-50 text-amber-700 border-amber-200",
   };
 
-  // sections count
-  const sectionsCount = (() => {
-    if (Number.isFinite(total_sections) && total_sections !== null) return total_sections;
-    const trCount = Array.isArray(sections_time_restricted) ? sections_time_restricted.length
-                   : typeof sections_time_restricted === "number" ? sections_time_restricted : 0;
-    const openCount = Array.isArray(sections_open) ? sections_open.length
-                   : typeof sections_open === "number" ? sections_open : 0;
-    if (trCount || openCount) return trCount + openCount;
-    if (Array.isArray(sections)) return sections.length;
-    return 0;
-  })();
-
-  // compute duration
-  const derivedDurationSeconds = (startFormatted.epoch && endFormatted.epoch && endFormatted.epoch > startFormatted.epoch)
-    ? Math.round((endFormatted.epoch - startFormatted.epoch) / 1000)
-    : null;
-
-  const durationSeconds = (backend_duration_seconds != null) ? Number(backend_duration_seconds) : derivedDurationSeconds;
-
-  const humanizeDuration = (seconds) => {
-    if (seconds == null || Number.isNaN(seconds)) return "—";
-    const s = Math.max(0, Math.round(Number(seconds)));
-    if (s < 60) return `${s}s`;
-    const mins = Math.floor(s / 60);
-    if (mins < 60) return `${mins}m`;
-    const hours = Math.floor(mins / 60);
-    const minutes = mins % 60;
-    return minutes === 0 ? `${hours}h` : `${hours}h ${minutes}m`;
-  };
-
-  const durationReadable = humanizeDuration(durationSeconds);
+  const testStatus = getTestStatus();
 
   return (
-    <div
-      onClick={onClick}
-      className="bg-white rounded-lg shadow-sm border border-gray-200 p-4 cursor-pointer hover:shadow-lg hover:border-emerald-300 transition-all duration-300 group relative overflow-hidden"
-      role="button"
-      tabIndex={0}
-    >
-      {/* Gradient overlay for visual appeal */}
-      <div className="absolute inset-0 bg-gradient-to-br from-emerald-50/20 to-blue-50/20 opacity-0 group-hover:opacity-100 transition-opacity duration-300 pointer-events-none" />
-      
-      <div className="relative z-10">
-        {/* Header with ID and Status */}
-        <div className="flex justify-between items-start mb-2">
-          <div className="flex-1 min-w-0">
-            {id && (
-              <div className="text-xs font-mono text-gray-500 bg-gray-50 px-2 py-0.5 rounded-md inline-block mb-2">
-                #{id}
-              </div>
-            )}
-            <h3 className="text-base font-semibold text-gray-900 group-hover:text-emerald-600 transition-colors leading-tight">
-              {title}
-            </h3>
-          </div>
-
-          <div className="flex items-center gap-2 ml-3">
-            <span
-              className={`px-2 py-1 capitalize rounded-full text-xs font-medium border ${statusColors[status] || statusColors.unknown}`}
-            >
-              {status}
-            </span>
-
-            {typeof onEdit === "function" && (
-              <button
-                onClick={(e) => {
+    <div className="group bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
+      {/* Header */}
+      <div className="flex justify-between items-start mb-4">
+        <div className="flex-1 pr-4">
+          <h3 className="text-xl font-bold text-gray-900 mb-2">
+            {test.test_name}
+          </h3>
+          <span className={`inline-block px-3 py-1 rounded-full text-xs font-medium border ${testStatus.color}`}>
+            {testStatus.status.charAt(0).toUpperCase() + testStatus.status.slice(1)}
+          </span>
+        </div>
+        <div className="flex gap-2 opacity-0 group-hover:opacity-100 transition-opacity duration-200">
+          <button
+onClick={(e) => {
                   e.stopPropagation();
                   e.preventDefault();
                   onEdit(test);
-                }}
-                title="Edit test"
-                className="p-1.5 rounded-md hover:bg-gray-100 transition-colors opacity-0 group-hover:opacity-100"
-                aria-label="Edit test"
-              >
-                <Edit size={14} className="text-gray-600" />
-              </button>
+                }}            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            title="Edit Test"
+          >
+            <Edit className="w-4 h-4" />
+          </button>
+          <button
+            onClick={onClick}
+            className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+            title="Test Builder"
+          >
+            <Settings className="w-4 h-4" />
+          </button>
+        </div>
+      </div>
+
+      {/* Description */}
+      <p className="text-gray-700 text-sm mb-4 line-clamp-2">
+        {test.description}
+      </p>
+
+      {/* Tags */}
+      {test.tags && test.tags.length > 0 && (
+        <div className="flex items-center gap-2 mb-4">
+          <Tag className="w-4 h-4 text-gray-400" />
+          <div className="flex flex-wrap gap-1">
+            {test.tags.slice(0, 3).map((tag, index) => (
+              <span key={index} className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                {tag}
+              </span>
+            ))}
+            {test.tags.length > 3 && (
+              <span className="px-2 py-1 bg-gray-100 text-gray-700 rounded text-xs">
+                +{test.tags.length - 3} more
+              </span>
             )}
           </div>
         </div>
+      )}
 
-        {/* Description */}
-        <p className="text-gray-600 text-sm mb-3 line-clamp-2 leading-relaxed">{description}</p>
-
-        {/* Date and Time - Compact Layout */}
-        <div className="space-y-2 mb-3">
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center text-gray-600">
-              <Calendar size={14} className="mr-2 text-emerald-500" />
-              <span className="font-medium">Start:</span>
-            </div>
-            <div className="text-right">
-              <div className="font-medium text-gray-900">{startFormatted.date}</div>
-              <div className="text-xs text-gray-500">{startFormatted.time}</div>
-            </div>
+      {/* Footer */}
+      <div className="flex items-center justify-between pt-4 border-t border-gray-100">
+        <div className="flex items-center gap-4 text-sm text-gray-600">
+          <div className="flex items-center gap-1">
+            <Clock className="w-4 h-4" />
+            <span>{formatDuration(test.duration_seconds)}</span>
           </div>
-
-          <div className="flex items-center justify-between text-sm">
-            <div className="flex items-center text-gray-600">
-              <Calendar size={14} className="mr-2 text-red-500" />
-              <span className="font-medium">End:</span>
-            </div>
-            <div className="text-right">
-              <div className="font-medium text-gray-900">{endFormatted.date}</div>
-              <div className="text-xs text-gray-500">{endFormatted.time}</div>
-            </div>
+          <div className="flex items-center gap-1">
+            <Users className="w-4 h-4" />
+            <span>{test.no_of_students}</span>
           </div>
-        </div>
-
-        {/* Duration */}
-        <div className="flex items-center justify-between text-sm mb-3">
-          <div className="flex items-center text-gray-600">
-            <Clock size={14} className="mr-2 text-blue-500" />
-            <span className="font-medium">Duration:</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="font-medium text-gray-900">{durationReadable}</span>
-          </div>
-        </div>
-
-        {/* Notes - always show with placeholder if empty */}
-        <div className="text-xs text-gray-500 mb-3 p-2 bg-gray-50 rounded-md">
-          <span className="font-medium text-gray-700">Notes:</span>{" "}
-          {notes ? (
-            <span className="text-gray-700">{notes}</span>
-          ) : (
-            <span className="italic text-gray-400">No notes available</span>
-          )}
-        </div>
-
-        {/* Footer: Sections + Students */}
-        <div className="flex justify-between items-center pt-3 border-t border-gray-100">
-          <div className="flex items-center text-sm text-gray-600">
-            <FileText size={14} className="mr-1.5 text-purple-500" />
-            <span className="font-medium">{sectionsCount}</span>
-            <span className="ml-1 text-gray-500">section{sectionsCount !== 1 ? "s" : ""}</span>
-          </div>
-          <div className="flex items-center text-sm text-gray-600">
-            <Users size={14} className="mr-1.5 text-orange-500" />
-            <span className="font-medium">{assignedStudentCount}</span>
-            <span className="ml-1 text-gray-500">student{assignedStudentCount !== 1 ? "s" : ""}</span>
+          <div className="flex items-center gap-1">
+            <FileText className="w-4 h-4" />
+            <span>{test.total_sections}</span>
           </div>
         </div>
       </div>

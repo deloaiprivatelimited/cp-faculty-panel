@@ -1,5 +1,5 @@
 import React from 'react';
-import { Clock, BookOpen, Award, Eye, CheckCircle, Edit2, Trash2 } from 'lucide-react';
+import { Clock, BookOpen, Award, Eye, CheckCircle, Edit2, Trash2 ,ListChecks} from 'lucide-react';
 import MarkdownRenderer from '../../../utils/MarkDownRender';
 
 const MCQCard = ({
@@ -9,6 +9,8 @@ const MCQCard = ({
   handleEdit = (mcq) => {},
   deleteEnabled = false,
   handleDelete = (mcq) => {},
+  label = false, // new prop default false
+
 }) => {
   // console.debug('mcq', mcq)
 
@@ -28,6 +30,15 @@ const MCQCard = ({
 
   return (
     <div className="bg-white rounded-xl border border-gray-200 p-6 hover:shadow-lg transition-all duration-200 hover:-translate-y-1">
+      {label && (
+  <div className="flex items-center gap-2 mb-3">
+    <ListChecks className="w-4 h-4 text-indigo-600" />
+    <span className="text-xs font-medium text-indigo-600 uppercase tracking-wide">
+      MCQ
+    </span>
+  </div>
+)}
+
       <div className="flex gap-6">
         {/* Left Section - Main Content */}
         <div className="flex-1">
