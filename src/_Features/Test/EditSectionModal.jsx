@@ -1,19 +1,35 @@
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import { X } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
 import { privateAxios } from "../../utils/axios";
 import { showError, showSuccess } from "../../utils/toast";
 
 const EditSectionModal = ({ section = {}, onClose, onSave }) => {
-  console.log('sectionsadas')
-  console.log(section)
+  // initialize from section prop; useEffect to update when section changes (optional)
   const [formData, setFormData] = useState({
     name: section.name || "",
     description: section.description || "",
     instructions: section.instructions || "",
     duration: section.duration ?? 30,
     time_restricted: !!section.time_restricted,
+    // new shuffle flags (default to false if undefined)
+    is_shuffle_question: !!section.is_shuffle_question,
+    is_shuffle_options: !!section.is_shuffle_options,
   });
+
+  useEffect(() => {
+    // keep state in sync if section prop changes while modal open
+    setFormData({
+      name: section.name || "",
+      description: section.description || "",
+      instructions: section.instructions || "",
+      duration: section.duration ?? 30,
+      time_restricted: !!section.time_restricted,
+      is_shuffle_question: !!section.is_shuffle_question,
+      is_shuffle_options: !!section.is_shuffle_options,
+    });
+  }, [section]);
+
   const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e) => {
@@ -27,6 +43,9 @@ const EditSectionModal = ({ section = {}, onClose, onSave }) => {
         description: formData.description,
         instructions: formData.instructions,
         time_restricted: !!formData.time_restricted,
+        // include shuffle flags explicitly
+        is_shuffle_question: !!formData.is_shuffle_question,
+        is_shuffle_options: !!formData.is_shuffle_options,
       };
 
       // include duration only when time constrained (optional on backend)
@@ -34,7 +53,10 @@ const EditSectionModal = ({ section = {}, onClose, onSave }) => {
         payload.duration = formData.duration;
       }
 
-      const res = await privateAxios.put(`/tests/sections/${section.id || section._id}`, payload);
+      const res = await privateAxios.put(
+        `/tests/sections/${section.id || section._id}`,
+        payload
+      );
       const updated = res.data?.data || res.data;
       showSuccess("Section updated successfully");
       if (onSave) onSave(updated);
@@ -131,7 +153,7 @@ const EditSectionModal = ({ section = {}, onClose, onSave }) => {
             />
           </div>
 
-          <div>
+          <div className="flex items-center gap-6">
             <label className="flex items-center gap-3">
               <input
                 type="checkbox"
@@ -141,6 +163,31 @@ const EditSectionModal = ({ section = {}, onClose, onSave }) => {
                 className="w-4 h-4 text-[#4CA466] border-gray-300 rounded"
               />
               <span className="text-sm font-medium text-gray-700">Time Constrained Section</span>
+            </label>
+
+            {/* Shuffle toggles shown inline next to time restriction checkbox */}
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                name="is_shuffle_question"
+                checked={formData.is_shuffle_question}
+                onChange={handleChange}
+                className="w-4 h-4 text-[#4CA466] border-gray-300 rounded"
+                aria-label="Shuffle Questions"
+              />
+              <span className="text-sm font-medium text-gray-700">Shuffle Questions</span>
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                name="is_shuffle_options"
+                checked={formData.is_shuffle_options}
+                onChange={handleChange}
+                className="w-4 h-4 text-[#4CA466] border-gray-300 rounded"
+                aria-label="Shuffle Options"
+              />
+              <span className="text-sm font-medium text-gray-700">Shuffle Options</span>
             </label>
           </div>
 

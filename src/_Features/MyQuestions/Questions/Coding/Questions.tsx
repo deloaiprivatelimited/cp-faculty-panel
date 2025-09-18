@@ -285,7 +285,7 @@ function QuestionList() {
         <div className="max-w-full mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-tight">
-              Coding (Local)
+              Coding Questions
             </h1>
 
             <button
