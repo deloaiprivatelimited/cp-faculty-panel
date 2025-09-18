@@ -1,7 +1,7 @@
-import React from 'react';
-import { Search, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
-import RearrangeCard from './RearrangeCard';
-import RearrangePreview from './RearrangePreview';
+import React from "react";
+import { Search, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import RearrangeCard from "./RearrangeCard";
+import RearrangePreview from "./RearrangePreview";
 
 // Controlled / presentational Rearrange list component (no backend calls).
 // Props mirror MCQList and allow server-side or client-side pagination/filtering.
@@ -12,15 +12,15 @@ import RearrangePreview from './RearrangePreview';
 // - onSearchChange, onTopicChange, onSubtopicChange, onDifficultyChange, onPageChange, onItemsPerPageChange, onResetFilters
 
 const RearrangeList = ({
-  heading = '',
+  heading = "",
   rearrangeData = { items: [], page: 1, per_page: 20, total: 0 },
   loading = false,
   error = null,
 
-  searchTerm = '',
-  selectedTopic = '',
-  selectedSubtopic = '',
-  selectedDifficulty = '',
+  searchTerm = "",
+  selectedTopic = "",
+  selectedSubtopic = "",
+  selectedDifficulty = "",
   currentPage = 1,
   itemsPerPage = 5,
 
@@ -36,8 +36,8 @@ const RearrangeList = ({
   onItemsPerPageChange = () => {},
   onResetFilters = () => {},
 
-  addEnabled=false,
-  handleAdd = ()=>{},
+  addEnabled = false,
+  handleAdd = () => {},
   editEnabled = false,
   handleEdit = (rearrange) => {},
   deleteEnabled = false,
@@ -47,25 +47,42 @@ const RearrangeList = ({
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
 
   // Server pagination detection (same approach as MCQList)
-  const serverTotal = typeof rearrangeData.total === 'number' ? rearrangeData.total : null;
-  const serverPage = typeof rearrangeData.page === 'number' ? rearrangeData.page : null;
-  const serverPerPage = typeof rearrangeData.per_page === 'number' ? rearrangeData.per_page : null;
+  const serverTotal =
+    typeof rearrangeData.total === "number" ? rearrangeData.total : null;
+  const serverPage =
+    typeof rearrangeData.page === "number" ? rearrangeData.page : null;
+  const serverPerPage =
+    typeof rearrangeData.per_page === "number" ? rearrangeData.per_page : null;
 
-  const isServerPaginated = serverTotal !== null && serverTotal > (rearrangeData.items?.length ?? 0);
+  const isServerPaginated =
+    serverTotal !== null && serverTotal > (rearrangeData.items?.length ?? 0);
 
   // Client-side filtering (only used when server isn't doing full pagination)
   const clientFiltered = React.useMemo(() => {
     if (isServerPaginated) return rearrangeData.items ?? [];
     const items = rearrangeData.items ?? [];
-    const q = (searchTerm || '').toLowerCase();
-    return items.filter(r => {
-      const matchesSearch = (r.title || '').toLowerCase().includes(q) || (r.prompt || '').toLowerCase().includes(q);
+    const q = (searchTerm || "").toLowerCase();
+    return items.filter((r) => {
+      const matchesSearch =
+        (r.title || "").toLowerCase().includes(q) ||
+        (r.prompt || "").toLowerCase().includes(q);
       const matchesTopic = !selectedTopic || r.topic === selectedTopic;
-      const matchesSubtopic = !selectedSubtopic || r.subtopic === selectedSubtopic;
-      const matchesDifficulty = !selectedDifficulty || r.difficulty_level === selectedDifficulty;
-      return matchesSearch && matchesTopic && matchesSubtopic && matchesDifficulty;
+      const matchesSubtopic =
+        !selectedSubtopic || r.subtopic === selectedSubtopic;
+      const matchesDifficulty =
+        !selectedDifficulty || r.difficulty_level === selectedDifficulty;
+      return (
+        matchesSearch && matchesTopic && matchesSubtopic && matchesDifficulty
+      );
     });
-  }, [isServerPaginated, rearrangeData.items, searchTerm, selectedTopic, selectedSubtopic, selectedDifficulty]);
+  }, [
+    isServerPaginated,
+    rearrangeData.items,
+    searchTerm,
+    selectedTopic,
+    selectedSubtopic,
+    selectedDifficulty,
+  ]);
 
   // Items to display on this page
   let paginated = [];
@@ -96,7 +113,7 @@ const RearrangeList = ({
 
   const handlePage = (page) => {
     onPageChange(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Compact page range generator (first, ..., cur-window..cur+window, ..., last)
@@ -105,34 +122,40 @@ const RearrangeList = ({
     const pages = new Set();
     pages.add(1);
     pages.add(total);
-    for (let i = Math.max(1, cur - windowSize); i <= Math.min(total, cur + windowSize); i++) pages.add(i);
+    for (
+      let i = Math.max(1, cur - windowSize);
+      i <= Math.min(total, cur + windowSize);
+      i++
+    )
+      pages.add(i);
     return Array.from(pages).sort((a, b) => a - b);
   };
 
   const pagesToRender = pageRange(currentPage, totalPages, 2);
 
   const showingCount = paginated.length;
-  const totalDisplayText = serverTotal !== null ? serverTotal : totalItemsToShow;
+  const totalDisplayText =
+    serverTotal !== null ? serverTotal : totalItemsToShow;
 
   return (
     <div className="min-h-screen bg-gray-50 ">
       {/* Sticky Search & Filters */}
       <div className="sticky top-0 z-40 bg-white shadow-sm border-b border-[#E5E5E5]">
-        <div className="max-w-7xl mx-auto px-4 py-8">
+        <div className="w-full mx-auto px-4 py-8">
           <div className="flex items-center justify-between mb-4">
-  <h1 className="text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-tight">
-    {heading || "Rearrange Questions"}
-  </h1>
+            <h1 className="text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-tight">
+              {heading || "Rearrange Questions"}
+            </h1>
 
-  {addEnabled && (
-    <button
-      onClick={handleAdd}
-      className="px-4 py-2 bg-[#4CA466] text-white rounded-xl hover:bg-[#3C8A52] transition-colors font-medium"
-    >
-      + Add
-    </button>
-  )}
-</div>  
+            {addEnabled && (
+              <button
+                onClick={handleAdd}
+                className="px-4 py-2 bg-[#4CA466] text-white rounded-xl hover:bg-[#3C8A52] transition-colors font-medium"
+              >
+                + Add
+              </button>
+            )}
+          </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
             <div className="lg:col-span-2">
               <div className="relative">
@@ -154,8 +177,10 @@ const RearrangeList = ({
                 className="w-full p-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] appearance-none cursor-pointer"
               >
                 <option value="">All Topics</option>
-                {topics.map(topic => (
-                  <option key={topic} value={topic}>{topic}</option>
+                {topics.map((topic) => (
+                  <option key={topic} value={topic}>
+                    {topic}
+                  </option>
                 ))}
               </select>
             </div>
@@ -167,8 +192,10 @@ const RearrangeList = ({
                 className="w-full p-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] appearance-none cursor-pointer"
               >
                 <option value="">All Subtopics</option>
-                {subtopics.map(st => (
-                  <option key={st} value={st}>{st}</option>
+                {subtopics.map((st) => (
+                  <option key={st} value={st}>
+                    {st}
+                  </option>
                 ))}
               </select>
             </div>
@@ -180,8 +207,10 @@ const RearrangeList = ({
                 className="w-full p-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] appearance-none cursor-pointer"
               >
                 <option value="">All Levels</option>
-                {difficulties.map(d => (
-                  <option key={d} value={d}>{d}</option>
+                {difficulties.map((d) => (
+                  <option key={d} value={d}>
+                    {d}
+                  </option>
                 ))}
               </select>
             </div>
@@ -202,14 +231,22 @@ const RearrangeList = ({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6 pb-24">
-        {loading && <div className="text-center py-12">Loading questions...</div>}
+      <div className="w-full mx-auto px-4 py-6 pb-24">
+        {loading && (
+          <div className="text-center py-12">Loading questions...</div>
+        )}
         {error && <div className="text-center py-12 text-red-600">{error}</div>}
 
         <div className="space-y-4">
-          {paginated.map(r => (
-            <RearrangeCard key={r.id} rearrange={r} onPreview={handlePreview} editEnabled={editEnabled} deleteEnabled ={deleteEnabled} handleDelete={handleDelete} handleEdit={handleEdit}
-            
+          {paginated.map((r) => (
+            <RearrangeCard
+              key={r.id}
+              rearrange={r}
+              onPreview={handlePreview}
+              editEnabled={editEnabled}
+              deleteEnabled={deleteEnabled}
+              handleDelete={handleDelete}
+              handleEdit={handleEdit}
             />
           ))}
         </div>
@@ -217,8 +254,12 @@ const RearrangeList = ({
         {!loading && paginated.length === 0 && (
           <div className="text-center py-16">
             <BookOpen className="w-16 h-16 text-[#E5E5E5] mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">No rearrange questions found</h3>
-            <p className="text-[#555555] mb-6">Try adjusting your search criteria or filters.</p>
+            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
+              No rearrange questions found
+            </h3>
+            <p className="text-[#555555] mb-6">
+              Try adjusting your search criteria or filters.
+            </p>
             <button
               onClick={onResetFilters}
               className="px-6 py-3 bg-[#4CA466] text-white rounded-xl hover:bg-[#3C8A52] transition-colors font-medium"
@@ -268,8 +309,8 @@ const RearrangeList = ({
                           onClick={() => handlePage(p)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             currentPage === p
-                              ? 'bg-[#4CA466] text-white'
-                              : 'border border-[#E5E5E5] hover:bg-[#F9FAFB] text-[#555555]'
+                              ? "bg-[#4CA466] text-white"
+                              : "border border-[#E5E5E5] hover:bg-[#F9FAFB] text-[#555555]"
                           }`}
                         >
                           {p}
@@ -280,21 +321,29 @@ const RearrangeList = ({
                 </div>
 
                 <button
-                  onClick={() => handlePage(Math.min(currentPage + 1, totalPages))}
+                  onClick={() =>
+                    handlePage(Math.min(currentPage + 1, totalPages))
+                  }
                   disabled={currentPage === totalPages}
                   className="p-2 rounded-lg border border-[#E5E5E5] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
                   <ChevronRight className="w-4 h-4" />
                 </button>
 
-                <div className="ml-4 text-sm text-[#555555]">Page {currentPage} of {totalPages}</div>
+                <div className="ml-4 text-sm text-[#555555]">
+                  Page {currentPage} of {totalPages}
+                </div>
               </div>
             </div>
           </div>
         </div>
       )}
 
-      <RearrangePreview rearrange={previewRearrange} isOpen={isPreviewOpen} onClose={handleClosePreview} />
+      <RearrangePreview
+        rearrange={previewRearrange}
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+      />
     </div>
   );
 };

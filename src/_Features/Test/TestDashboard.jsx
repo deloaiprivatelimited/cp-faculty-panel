@@ -184,7 +184,7 @@ export default function TestDashboard({
     <div className="min-h-screen bg-gradient-to-br from-gray-50 to-gray-100/50">
       {/* Combined Header with Tabs */}
       <header className="bg-white/90 backdrop-blur-md shadow-lg border-b border-gray-200/50 sticky top-0 z-40">
-        <div className="max-w-7xl mx-auto px-6 py-6">
+        <div className="w-full mx-auto px-6 py-6">
           {/* Top Section - Title, Search, Create Button */}
           <div className="flex justify-between items-center mb-6">
             <div>
@@ -267,7 +267,7 @@ export default function TestDashboard({
         </div>
       </header>
 
-      <div className="max-w-7xl mx-auto px-6 py-8">
+      <div className="w-full mx-auto px-6 py-8">
         {/* Content */}
         <div>
           {/* Enhanced Controls */}
@@ -381,6 +381,7 @@ export default function TestDashboard({
                   >
                     <TestCard
                       test={test}
+                      assignedStudentCount={0}
                       onClick={() => window.open(`/test/${test.id}/testbuilder`, "_blank")}
                       onEdit={(t) => handleOpenEdit(t)}
                     />

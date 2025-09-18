@@ -64,9 +64,7 @@ const Layout = ({ children }) => {
 
 function App() {
     useEffect(() => {
-   
   
-     
       const fetchQuestions = async () => {
         try {
           // GET /sections/<section_id>/questions
@@ -117,7 +115,7 @@ function App() {
             />  <Route
               path="/myqs/mcq"
               element={
-                <ProtectedRoute >
+                <ProtectedRoute className="h-screen overflow-y-auto">
                   <ListMCQQuestions />
                 </ProtectedRoute>
               }

@@ -1,8 +1,8 @@
 // Utils/Coding/CodingList.jsx
-import React from 'react';
-import { Search, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
-import CodingCard from './CodingCard';
-import CodingPreview from './CodingPreview';
+import React from "react";
+import { Search, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import CodingCard from "./CodingCard";
+import CodingPreview from "./CodingPreview";
 
 // Controlled / presentational Coding list component (no backend calls).
 // Props:
@@ -13,15 +13,15 @@ import CodingPreview from './CodingPreview';
 // - onSearchChange, onTopicChange, onSubtopicChange, onDifficultyChange, onPageChange, onItemsPerPageChange, onResetFilters
 
 const CodingList = ({
-  heading = '',
+  heading = "",
   codingData = { items: [], page: 1, per_page: 20, total: 0 },
   loading = false,
   error = null,
 
-  searchTerm = '',
-  selectedTopic = '',
-  selectedSubtopic = '',
-  selectedDifficulty = '',
+  searchTerm = "",
+  selectedTopic = "",
+  selectedSubtopic = "",
+  selectedDifficulty = "",
   currentPage = 1,
   itemsPerPage = 5,
 
@@ -37,9 +37,8 @@ const CodingList = ({
   onItemsPerPageChange = () => {},
   onResetFilters = () => {},
 
-  
-  addEnabled=false,
-  handleAdd = ()=>{},
+  addEnabled = false,
+  handleAdd = () => {},
   editEnabled = false,
   handleEdit = (coding) => {},
   deleteEnabled = false,
@@ -49,27 +48,43 @@ const CodingList = ({
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
 
   // Server pagination detection
-  const serverTotal = typeof codingData.total === 'number' ? codingData.total : null;
-  const serverPage = typeof codingData.page === 'number' ? codingData.page : null;
-  const serverPerPage = typeof codingData.per_page === 'number' ? codingData.per_page : null;
+  const serverTotal =
+    typeof codingData.total === "number" ? codingData.total : null;
+  const serverPage =
+    typeof codingData.page === "number" ? codingData.page : null;
+  const serverPerPage =
+    typeof codingData.per_page === "number" ? codingData.per_page : null;
 
-  const isServerPaginated = serverTotal !== null && serverTotal > (codingData.items?.length ?? 0);
+  const isServerPaginated =
+    serverTotal !== null && serverTotal > (codingData.items?.length ?? 0);
 
   // Client-side filtering (only used when server isn't doing full pagination)
   const clientFilteredCoding = React.useMemo(() => {
     if (isServerPaginated) return codingData.items ?? [];
     const items = codingData.items ?? [];
-    const q = (searchTerm || '').toLowerCase();
-    return items.filter(coding => {
+    const q = (searchTerm || "").toLowerCase();
+    return items.filter((coding) => {
       const matchesSearch =
-        (coding.title || '').toLowerCase().includes(q) ||
-        (coding.short_description || '').toLowerCase().includes(q);
+        (coding.title || "").toLowerCase().includes(q) ||
+        (coding.short_description || "").toLowerCase().includes(q);
       const matchesTopic = !selectedTopic || coding.topic === selectedTopic;
-      const matchesSubtopic = !selectedSubtopic || coding.subtopic === selectedSubtopic;
-      const matchesDifficulty = !selectedDifficulty || (coding.difficulty || coding.difficulty_level) === selectedDifficulty;
-      return matchesSearch && matchesTopic && matchesSubtopic && matchesDifficulty;
+      const matchesSubtopic =
+        !selectedSubtopic || coding.subtopic === selectedSubtopic;
+      const matchesDifficulty =
+        !selectedDifficulty ||
+        (coding.difficulty || coding.difficulty_level) === selectedDifficulty;
+      return (
+        matchesSearch && matchesTopic && matchesSubtopic && matchesDifficulty
+      );
     });
-  }, [isServerPaginated, codingData.items, searchTerm, selectedTopic, selectedSubtopic, selectedDifficulty]);
+  }, [
+    isServerPaginated,
+    codingData.items,
+    searchTerm,
+    selectedTopic,
+    selectedSubtopic,
+    selectedDifficulty,
+  ]);
 
   // Items to display on this page
   let paginatedCoding = [];
@@ -85,7 +100,10 @@ const CodingList = ({
     const totalFiltered = clientFilteredCoding.length;
     totalPages = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
     const startIndex = (currentPage - 1) * itemsPerPage;
-    paginatedCoding = clientFilteredCoding.slice(startIndex, startIndex + itemsPerPage);
+    paginatedCoding = clientFilteredCoding.slice(
+      startIndex,
+      startIndex + itemsPerPage
+    );
     totalItemsToShow = totalFiltered;
   }
 
@@ -100,7 +118,7 @@ const CodingList = ({
 
   const handlePage = (page) => {
     onPageChange(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Compact page range (first, ..., cur-2..cur+2, ..., last)
@@ -109,35 +127,40 @@ const CodingList = ({
     const pages = new Set();
     pages.add(1);
     pages.add(total);
-    for (let i = Math.max(1, cur - windowSize); i <= Math.min(total, cur + windowSize); i++) pages.add(i);
+    for (
+      let i = Math.max(1, cur - windowSize);
+      i <= Math.min(total, cur + windowSize);
+      i++
+    )
+      pages.add(i);
     return Array.from(pages).sort((a, b) => a - b);
   };
 
   const pagesToRender = pageRange(currentPage, totalPages, 2);
 
   const showingCount = paginatedCoding.length;
-  const totalDisplayText = serverTotal !== null ? serverTotal : totalItemsToShow;
+  const totalDisplayText =
+    serverTotal !== null ? serverTotal : totalItemsToShow;
 
   return (
-    <div className="min-h-screen bg-gray-50 ">
+    <div className="h-full bg-gray-50 ">
       {/* Sticky Search & Filters */}
       <div className="sticky top-0 z-40 bg-white shadow-sm border-b border-[#E5E5E5]">
-        <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="flex items-center justify-between mb-4">
-  <h1 className="text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-tight">
-    {heading || "Coding Questions"}
-  </h1>
+        <div className="max-w-full mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-tight">
+              {heading || "MCQ Questions"}
+            </h1>
 
-  {addEnabled && (
-    <button
-      onClick={handleAdd}
-      className="px-4 py-2 bg-[#4CA466] text-white rounded-xl hover:bg-[#3C8A52] transition-colors font-medium"
-    >
-      + Add
-    </button>
-  )}
-</div>
-
+            {addEnabled && (
+              <button
+                onClick={handleAdd}
+                className="px-4 py-2 bg-[#4CA466] text-white rounded-xl hover:bg-[#3C8A52] transition-colors font-medium"
+              >
+                + Add
+              </button>
+            )}
+          </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
             <div className="lg:col-span-2">
@@ -145,7 +168,7 @@ const CodingList = ({
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#555555] w-5 h-5" />
                 <input
                   type="text"
-                  placeholder="Search coding questions..."
+                  placeholder="Search questions..."
                   value={searchTerm}
                   onChange={(e) => onSearchChange(e.target.value)}
                   className="w-full pl-12 pr-4 py-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] placeholder-[#555555]"
@@ -160,8 +183,10 @@ const CodingList = ({
                 className="w-full p-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] appearance-none cursor-pointer"
               >
                 <option value="">All Topics</option>
-                {topics.map(topic => (
-                  <option key={topic} value={topic}>{topic}</option>
+                {topics.map((topic) => (
+                  <option key={topic} value={topic}>
+                    {topic}
+                  </option>
                 ))}
               </select>
             </div>
@@ -173,8 +198,10 @@ const CodingList = ({
                 className="w-full p-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] appearance-none cursor-pointer"
               >
                 <option value="">All Subtopics</option>
-                {subtopics.map(subtopic => (
-                  <option key={subtopic} value={subtopic}>{subtopic}</option>
+                {subtopics.map((subtopic) => (
+                  <option key={subtopic} value={subtopic}>
+                    {subtopic}
+                  </option>
                 ))}
               </select>
             </div>
@@ -186,8 +213,10 @@ const CodingList = ({
                 className="w-full p-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] appearance-none cursor-pointer"
               >
                 <option value="">All Levels</option>
-                {difficulties.map(difficulty => (
-                  <option key={difficulty} value={difficulty}>{difficulty}</option>
+                {difficulties.map((difficulty) => (
+                  <option key={difficulty} value={difficulty}>
+                    {difficulty}
+                  </option>
                 ))}
               </select>
             </div>
@@ -195,7 +224,7 @@ const CodingList = ({
 
           <div className="flex items-center justify-between">
             <p className="text-sm text-[#555555]">
-              Showing {showingCount} of {totalDisplayText} coding questions
+              Showing {showingCount} of {totalDisplayText} questions
             </p>
             <button
               onClick={onResetFilters}
@@ -208,21 +237,35 @@ const CodingList = ({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6 pb-24">
-        {loading && <div className="text-center py-12">Loading questions...</div>}
+      <div className="w-full mx-auto px-4 py-6 pb-24">
+        {loading && (
+          <div className="text-center py-12">Loading questions...</div>
+        )}
         {error && <div className="text-center py-12 text-red-600">{error}</div>}
 
         <div className="space-y-4">
-          {paginatedCoding.map(coding => (
-            <CodingCard key={coding.id} coding={coding} onPreview={handlePreview} editEnabled={editEnabled} handleEdit={handleEdit} deleteEnabled={deleteEnabled} handleDelete={handleDelete} />
+          {paginatedCoding.map((coding) => (
+            <CodingCard
+              key={coding.id}
+              coding={coding}
+              onPreview={handlePreview}
+              editEnabled={editEnabled}
+              handleEdit={handleEdit}
+              deleteEnabled={deleteEnabled}
+              handleDelete={handleDelete}
+            />
           ))}
         </div>
 
         {!loading && paginatedCoding.length === 0 && (
           <div className="text-center py-16">
             <BookOpen className="w-16 h-16 text-[#E5E5E5] mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">No coding questions found</h3>
-            <p className="text-[#555555] mb-6">Try adjusting your search criteria or filters.</p>
+            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
+              No coding questions found
+            </h3>
+            <p className="text-[#555555] mb-6">
+              Try adjusting your search criteria or filters.
+            </p>
             <button
               onClick={onResetFilters}
               className="px-6 py-3 bg-[#4CA466] text-white rounded-xl hover:bg-[#3C8A52] transition-colors font-medium"
@@ -272,8 +315,8 @@ const CodingList = ({
                           onClick={() => handlePage(p)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             currentPage === p
-                              ? 'bg-[#4CA466] text-white'
-                              : 'border border-[#E5E5E5] hover:bg-[#F9FAFB] text-[#555555]'
+                              ? "bg-[#4CA466] text-white"
+                              : "border border-[#E5E5E5] hover:bg-[#F9FAFB] text-[#555555]"
                           }`}
                         >
                           {p}
@@ -284,7 +327,9 @@ const CodingList = ({
                 </div>
 
                 <button
-                  onClick={() => handlePage(Math.min(currentPage + 1, totalPages))}
+                  onClick={() =>
+                    handlePage(Math.min(currentPage + 1, totalPages))
+                  }
                   disabled={currentPage === totalPages}
                   className="p-2 rounded-lg border border-[#E5E5E5] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -300,7 +345,11 @@ const CodingList = ({
         </div>
       )}
 
-      <CodingPreview coding={previewCoding} isOpen={isPreviewOpen} onClose={handleClosePreview} />
+      <CodingPreview
+        coding={previewCoding}
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+      />
     </div>
   );
 };

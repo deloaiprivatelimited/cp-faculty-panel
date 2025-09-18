@@ -1,19 +1,24 @@
 // pages/index.jsx
-import React, { useEffect, useCallback, useState } from 'react';
-import { privateAxios } from '../../../../utils/axios';
+import React, { useEffect, useCallback, useState } from "react";
+import { privateAxios } from "../../../../utils/axios";
 // import CodingList from '../../../Utils/Coding/CodingList';
-import MCQList from '../../../Utils/MCQ/MCQList';
-import { useNavigate } from 'react-router-dom';
-import { showError,showSuccess } from '../../../../utils/toast';
+import MCQList from "../../../Utils/MCQ/MCQList";
+import { useNavigate } from "react-router-dom";
+import { showError, showSuccess } from "../../../../utils/toast";
 
 const IndexPage = () => {
-  const [mcqData, setMcqData] = useState({ items: [], page: 1, per_page: 5, total: 0 });
+  const [mcqData, setMcqData] = useState({
+    items: [],
+    page: 1,
+    per_page: 5,
+    total: 0,
+  });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
   const navigate = useNavigate();
- // Navigation handlers
+  // Navigation handlers
   const handleAdd = () => {
-    navigate('/questions/mcq/add');
+    navigate("/questions/mcq/add");
   };
 
   const handleEdit = (mcq) => {
@@ -21,10 +26,10 @@ const IndexPage = () => {
     navigate(`/questions/mcq/${mcq.id}/edit`);
   };
   // Controlled UI state
-  const [searchTerm, setSearchTerm] = useState('');
-  const [selectedTopic, setSelectedTopic] = useState('');
-  const [selectedSubtopic, setSelectedSubtopic] = useState('');
-  const [selectedDifficulty, setSelectedDifficulty] = useState('');
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedTopic, setSelectedTopic] = useState("");
+  const [selectedSubtopic, setSelectedSubtopic] = useState("");
+  const [selectedDifficulty, setSelectedDifficulty] = useState("");
   const [currentPage, setCurrentPage] = useState(1);
   const [itemsPerPage, setItemsPerPage] = useState(5);
 
@@ -38,7 +43,14 @@ const IndexPage = () => {
     if (selectedSubtopic) params.subtopic = selectedSubtopic;
     if (selectedDifficulty) params.difficulty = selectedDifficulty;
     return params;
-  }, [searchTerm, selectedTopic, selectedSubtopic, selectedDifficulty, currentPage, itemsPerPage]);
+  }, [
+    searchTerm,
+    selectedTopic,
+    selectedSubtopic,
+    selectedDifficulty,
+    currentPage,
+    itemsPerPage,
+  ]);
 
   const fetchMCQs = useCallback(
     async (signal) => {
@@ -46,13 +58,17 @@ const IndexPage = () => {
       setError(null);
       try {
         const params = buildParams();
-        const resp = await privateAxios.get('/v1/mcq/college_mcqs', { params, signal });
+        const resp = await privateAxios.get("/v1/mcq/college_mcqs", {
+          params,
+          signal,
+        });
         const data = resp.data || {};
 
         const items = Array.isArray(data.items) ? data.items : [];
         const page = data.page ?? params.page ?? 1;
         const per_page = data.per_page ?? params.per_page ?? itemsPerPage;
-        const total = typeof data.total === 'number' ? data.total : items.length;
+        const total =
+          typeof data.total === "number" ? data.total : items.length;
 
         setMcqData({ items, page, per_page, total });
 
@@ -60,15 +76,15 @@ const IndexPage = () => {
         if (items.length > 0) {
           // showSuccess('MCQs loaded successfully!');
         } else {
-          showError('No MCQs found with the current filters.');
+          showError("No MCQs found with the current filters.");
         }
       } catch (err) {
-        if (err?.name === 'CanceledError' || err?.name === 'AbortError') {
+        if (err?.name === "CanceledError" || err?.name === "AbortError") {
           // ignore cancelled request
         } else {
-          console.error('fetchMCQs error', err);
-          setError('Failed to load questions. Please try again.');
-          showError('Failed to load questions. Please try again.');
+          console.error("fetchMCQs error", err);
+          setError("Failed to load questions. Please try again.");
+          showError("Failed to load questions. Please try again.");
         }
       } finally {
         setLoading(false);
@@ -84,56 +100,78 @@ const IndexPage = () => {
   }, [fetchMCQs]);
 
   // Derived lists
-  const topics = Array.from(new Set(mcqData.items.map(i => i.topic).filter(Boolean)));
-  const subtopics = Array.from(new Set(mcqData.items.map(i => i.subtopic).filter(Boolean)));
-  const difficulties = Array.from(new Set(mcqData.items.map(i => i.difficulty_level).filter(Boolean)));
+  const topics = Array.from(
+    new Set(mcqData.items.map((i) => i.topic).filter(Boolean))
+  );
+  const subtopics = Array.from(
+    new Set(mcqData.items.map((i) => i.subtopic).filter(Boolean))
+  );
+  const difficulties = Array.from(
+    new Set(mcqData.items.map((i) => i.difficulty_level).filter(Boolean))
+  );
 
   // Handlers
-  const handleSearchChange = (v) => { setSearchTerm(v); setCurrentPage(1); };
-  const handleTopicChange = (v) => { setSelectedTopic(v); setCurrentPage(1); };
-  const handleSubtopicChange = (v) => { setSelectedSubtopic(v); setCurrentPage(1); };
-  const handleDifficultyChange = (v) => { setSelectedDifficulty(v); setCurrentPage(1); };
+  const handleSearchChange = (v) => {
+    setSearchTerm(v);
+    setCurrentPage(1);
+  };
+  const handleTopicChange = (v) => {
+    setSelectedTopic(v);
+    setCurrentPage(1);
+  };
+  const handleSubtopicChange = (v) => {
+    setSelectedSubtopic(v);
+    setCurrentPage(1);
+  };
+  const handleDifficultyChange = (v) => {
+    setSelectedDifficulty(v);
+    setCurrentPage(1);
+  };
   const handlePageChange = (p) => setCurrentPage(p);
-  const handleItemsPerPageChange = (n) => { setItemsPerPage(n); setCurrentPage(1); };
+  const handleItemsPerPageChange = (n) => {
+    setItemsPerPage(n);
+    setCurrentPage(1);
+  };
   const handleResetFilters = () => {
-    setSearchTerm('');
-    setSelectedTopic('');
-    setSelectedSubtopic('');
-    setSelectedDifficulty('');
+    setSearchTerm("");
+    setSelectedTopic("");
+    setSelectedSubtopic("");
+    setSelectedDifficulty("");
     setItemsPerPage(5);
     setCurrentPage(1);
   };
   const handleDelete = async (mcq) => {
-  if (!mcq?.id) return;
-  const ok = window.confirm("Are you sure you want to delete this question?");
-  if (!ok) return;
+    if (!mcq?.id) return;
+    const ok = window.confirm("Are you sure you want to delete this question?");
+    if (!ok) return;
 
-  try {
-    const resp = await privateAxios.delete(`/v1/mcq/college_mcqs/${mcq.id}`);
-    const data = resp?.data || {};
+    try {
+      const resp = await privateAxios.delete(`/v1/mcq/college_mcqs/${mcq.id}`);
+      const data = resp?.data || {};
 
-    if (data.success) {
-      showSuccess(data.message || "Deleted successfully");
-      // refresh list after delete
-      fetchMCQs();
-    } else {
-      showError(data.message || "Delete failed");
+      if (data.success) {
+        showSuccess(data.message || "Deleted successfully");
+        // refresh list after delete
+        fetchMCQs();
+      } else {
+        showError(data.message || "Delete failed");
+      }
+    } catch (err) {
+      console.error("Delete error", err);
+      const msg =
+        err?.response?.data?.message ||
+        err?.message ||
+        "Failed to delete. Please try again.";
+      showError(msg);
     }
-  } catch (err) {
-    console.error("Delete error", err);
-    const msg = err?.response?.data?.message || err?.message || "Failed to delete. Please try again.";
-    showError(msg);
-  }
-};
-
+  };
 
   return (
     <MCQList
-    heading='Global Questions'
+      heading="Global Questions"
       mcqData={mcqData}
       loading={loading}
       error={error}
-
       // controlled filter values
       searchTerm={searchTerm}
       selectedTopic={selectedTopic}
@@ -141,12 +179,10 @@ const IndexPage = () => {
       selectedDifficulty={selectedDifficulty}
       currentPage={currentPage}
       itemsPerPage={itemsPerPage}
-
       // derived lists
       topics={topics}
       subtopics={subtopics}
       difficulties={difficulties}
-
       // handlers
       onSearchChange={handleSearchChange}
       onTopicChange={handleTopicChange}
@@ -155,12 +191,12 @@ const IndexPage = () => {
       onPageChange={handlePageChange}
       onItemsPerPageChange={handleItemsPerPageChange}
       onResetFilters={handleResetFilters}
-handleDelete={handleDelete}
-handleAdd={handleAdd}
-handleEdit={handleEdit}
-    editEnabled={true}
-    addEnabled={true}
-    deleteEnabled={true}
+      handleDelete={handleDelete}
+      handleAdd={handleAdd}
+      handleEdit={handleEdit}
+      editEnabled={true}
+      addEnabled={true}
+      deleteEnabled={true}
     />
   );
 };
