@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { Code, Terminal, Check, X } from 'lucide-react';
 import { privateAxios } from '../../../../utils/axios';
-import CodingCard from '../../../Utils/Coding/CodingCard';
-import CodingPreview from '../../../Utils/Coding/CodingPreview';
+
 export type SourceType = 'library' | 'global' | null;
 
 export interface CodingQuestionPreview {
@@ -41,7 +40,7 @@ const SelectCoding: React.FC<SelectCodingProps> = ({
 }) => {
   const [selectedSource, setSelectedSource] = useState<SourceType>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [questions, setQuestions] = useState<CodingQuestionPreview[]>([]); // typed
+  const [questions, setQuestions] = useState<CodingQuestionPreview[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
@@ -49,7 +48,6 @@ const SelectCoding: React.FC<SelectCodingProps> = ({
   const [total, setTotal] = useState<number | null>(null);
   const [duplicating, setDuplicating] = useState(false);
 
-<<<<<<< HEAD
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
   const [difficultyFilter, setDifficultyFilter] = useState('');
@@ -62,11 +60,6 @@ const SelectCoding: React.FC<SelectCodingProps> = ({
   const [subtopics, setSubtopics] = useState<string[]>([]);
   const [difficultyLevels, setDifficultyLevels] = useState<string[]>([]);
 
-=======
-  const [previewCoding, setPreviewCoding] = React.useState<CodingQuestionPreview | null>(null);
-  const [isCodingPreviewOpen, setIsCodingPreviewOpen] = React.useState(false);
-  
->>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
   useEffect(() => {
     if (!isOpen) {
       setSelectedSource(null);
@@ -103,14 +96,6 @@ const SelectCoding: React.FC<SelectCodingProps> = ({
     const resourceSegment = source === 'library' ? 'college-questions' : 'questions';
     return `${apiBase}/test/${resourceSegment}/coding/${qId}/duplicate-to-section`;
   };
-  const handleCodingPreview = (coding: CodingQuestionPreview) => {
-    setPreviewCoding(coding);
-    setIsCodingPreviewOpen(true);
-  };
-  const handleCloseCodingPreview = () => {
-    setIsCodingPreviewOpen(false);
-    setPreviewCoding(null);
-  };
 
   const fetchCodingQuestions = async (source: Exclude<SourceType, null>, pageNum = 1, per = 20) => {
     setLoading(true);
@@ -133,7 +118,6 @@ const SelectCoding: React.FC<SelectCodingProps> = ({
         subtopic: it.subtopic || ''
       }));
 
-      // store mapped items so the shape is consistent for rendering & preview
       setQuestions(mapped);
       setTotal(body.data && body.data.meta ? body.data.meta.total : null);
     } catch (err: any) {
@@ -194,17 +178,8 @@ const SelectCoding: React.FC<SelectCodingProps> = ({
       for (const qId of selectedIds) {
         try {
           const url = buildDuplicateUrl(selectedSource, qId);
-<<<<<<< HEAD
           const res = await privateAxios.post(url, {});
           const body = res.data;
-=======
-          // section_id removed per request — send empty body
-
-          const payload: any = {};
-if (defaultSectionId) payload.section_id = defaultSectionId;
-// If you might later allow per-MCQ section override, set it here per item.
-const res = await privateAxios.post(url, payload);          const body = res.data;
->>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
 
           if (!body.success) {
             results.push({ original_question_id: qId, success: false, message: body.message || 'Server failed' });
@@ -305,7 +280,6 @@ const res = await privateAxios.post(url, payload);          const body = res.dat
                 </select>
               </div>
 
-<<<<<<< HEAD
               {loading ? <p className="text-gray-500">Loading questions...</p> :
                 error ? <p className="text-red-500">{error}</p> :
                   questions.length === 0 ? <p className="text-gray-500">No coding questions found.</p> :
@@ -334,53 +308,6 @@ const res = await privateAxios.post(url, payload);          const body = res.dat
                       ))}
                     </div>
               }
-=======
-              {error && <div className="text-sm text-red-600">{error}</div>}
-
-              <div className="max-h-64 overflow-y-auto space-y-2 border border-gray-100 p-2 rounded-lg">
-                {questions.length === 0 && !loading && <div className="text-sm text-gray-500">No coding questions found.</div>}
-
-                {/* --- START: selection wrapper for each card --- */}
-                {questions.map((q) => {
-                  const isSelected = selectedIds.includes(q.id);
-                  return (
-                    <div
-                      key={q.id}
-                      className={`flex items-start gap-3 p-3 rounded-lg transition-all border ${
-                        isSelected ? 'border-purple-300 bg-purple-50' : 'border-transparent hover:border-gray-200'
-                      }`}
-                    >
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleQuestion(q.id)}
-                          className="w-5 h-5 rounded-md focus:ring-0"
-                        />
-                      </label>
-
-                      <div className="flex-1">
-                        {/* keep CodingCard as-is, pass minimal props; you can extend CodingCard to accept `selected` or `onSelect` later */}
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1" onClick={() => handleCodingPreview(q)} role="button">
-                            <CodingCard coding={q} onPreview={handleCodingPreview} label={true} />
-                          </div>
-
-                          {/* small selected indicator on the right */}
-                          {isSelected ? (
-                            <div className="ml-3 flex items-center gap-1 text-sm text-purple-700">
-                              <Check className="w-4 h-4" />
-                              <span>Selected</span>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-                {/* --- END selection wrapper --- */}
-              </div>
->>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
 
               <div className="flex items-center justify-between mt-2">
                 <div className="text-sm text-gray-500">Page {page}</div>
@@ -390,41 +317,16 @@ const res = await privateAxios.post(url, payload);          const body = res.dat
                 </div>
               </div>
 
-<<<<<<< HEAD
               <div className="pt-4 border-t border-gray-200 flex justify-end gap-3">
                 <button onClick={handleBack} className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">Cancel</button>
                 <button onClick={handleDuplicateAndAdd} disabled={selectedIds.length===0 || duplicating} className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:bg-gray-300">
                   {duplicating ? 'Processing...' : `Duplicate (${selectedIds.length})`}
                 </button>
-=======
-              <div className="pt-4 border-t border-gray-200 space-y-3">
-                <div className="flex items-center justify-between">
-                  <div className="text-sm text-gray-600">
-                    {selectedIds.length} selected
-                  </div>
-                  <div className="flex justify-end gap-3">
-                    <button
-                      onClick={handleBack}
-                      className="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg transition-colors"
-                    >
-                      Cancel
-                    </button>
-                    <button
-                      onClick={handleDuplicateAndAdd}
-                      disabled={selectedIds.length === 0 || duplicating}
-                      className="px-4 py-2 bg-purple-500 text-white rounded-lg hover:bg-purple-600 disabled:bg-gray-300 disabled:cursor-not-allowed transition-colors"
-                    >
-                      {duplicating ? 'Processing...' : `Duplicate (${selectedIds.length})`}
-                    </button>
-                  </div>
-                </div>
->>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
               </div>
             </>
           )}
         </div>
       </div>
-      <CodingPreview coding={previewCoding} isOpen={isCodingPreviewOpen} onClose={handleCloseCodingPreview} />
     </div>
   );
 };

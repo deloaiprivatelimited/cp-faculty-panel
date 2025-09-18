@@ -1,8 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import { List, Grid, Check, X } from 'lucide-react';
 import { privateAxios } from '../../../../utils/axios';
-import RearrangeCard from '../../../Utils/Rearrange/RearrangeCard';
-import RearrangePreview from '../../../Utils/Rearrange/RearrangePreview';
+
 export type SourceType = 'library' | 'global' | null;
 
 export interface RearrangeItemPreview {
@@ -45,15 +44,13 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
 }) => {
   const [selectedSource, setSelectedSource] = useState<SourceType>(null);
   const [selectedIds, setSelectedIds] = useState<string[]>([]);
-  const [questions, setQuestions] = useState([]);
+  const [questions, setQuestions] = useState<RearrangeQuestion[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [page, setPage] = useState(1);
   const [perPage] = useState(50);
   const [total, setTotal] = useState<number | null>(null);
   const [duplicating, setDuplicating] = useState(false);
-  const [previewRearrange, setPreviewRearrange] = React.useState<RearrangeQuestion | null>(null);
-  const [isRearrangePreviewOpen, setIsRearrangePreviewOpen] = React.useState(false);
 
   // Filters
   const [searchTerm, setSearchTerm] = useState('');
@@ -116,7 +113,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
           id: itm.id || itm.item_id || String(Math.random()),
           value_preview: itm.value_preview,
           has_images: !!itm.has_images
-<<<<<<< HEAD
         })),
         topic: it.topic || '',
         subtopic: it.subtopic || ''
@@ -124,14 +120,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
 
       setQuestions(items);
       setTotal(body.data?.meta?.total || null);
-=======
-        }))
-      }));
-
-      // use the normalized `mapped` array (previously you set `items` here)
-      setQuestions(items);
-      setTotal(body.data && body.data.meta ? body.data.meta.total : null);
->>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
     } catch (err: any) {
       console.error(err);
       setError(err.message || String(err));
@@ -161,20 +149,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
     setSelectedIds(prev => (prev.includes(id) ? prev.filter(x => x !== id) : [...prev, id]));
   };
 
-  const selectAllOnPage = () => {
-    const idsOnPage = questions.map(q => q.id);
-    const allSelected = idsOnPage.length > 0 && idsOnPage.every(id => selectedIds.includes(id));
-    if (allSelected) {
-      setSelectedIds(prev => prev.filter(id => !idsOnPage.includes(id)));
-    } else {
-      setSelectedIds(prev => {
-        const s = new Set(prev);
-        idsOnPage.forEach(id => s.add(id));
-        return Array.from(s);
-      });
-    }
-  };
-
   const handleBack = () => {
     setSelectedSource(null);
     setSelectedIds([]);
@@ -196,14 +170,7 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
       for (const rearrId of selectedIds) {
         try {
           const url = buildDuplicateUrl(selectedSource, rearrId);
-<<<<<<< HEAD
           const res = await privateAxios.post(url, {});
-=======
-          // payload: include defaultSectionId if present
-          const payload: any = {};
-          if (defaultSectionId) payload.section_id = defaultSectionId;
-          const res = await privateAxios.post(url, payload);
->>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
           const body = res.data;
 
           if (!body.success) {
@@ -235,15 +202,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
 
   if (!isOpen) return null;
 
-  const handleRearrangePreview = (rearrange: RearrangeQuestion) => {
-    setPreviewRearrange(rearrange);
-    setIsRearrangePreviewOpen(true);
-  };
-  const handleCloseRearrangePreview = () => {
-    setIsRearrangePreviewOpen(false);
-    setPreviewRearrange(null);
-  };
-
   return (
     <div className="fixed inset-0 bg-black/70 bg-opacity-40 flex items-center justify-center z-50">
       <div className="bg-white rounded-xl shadow-2xl max-w-4xl w-full mx-4">
@@ -272,7 +230,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
               </button>
             </div>
           ) : (
-<<<<<<< HEAD
             <>
               {/* Filters */}
               <div className="flex flex-wrap gap-3 mb-4">
@@ -312,69 +269,9 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
                       ))}
                     </div>
               }
-=======
-            <div className="space-y-4">
-              <div className="flex items-center justify-between">
-                <p className="text-gray-600 mb-4">
-                  Select rearrange questions from {selectedSource === 'library' ? 'Library' : 'Global'}:
-                </p>
-                <div className="flex items-center gap-4">
-                  <div className="text-sm text-gray-500">{loading ? 'Loading...' : total != null ? `${total} total` : ''}</div>
-                  <button
-                    onClick={selectAllOnPage}
-                    className="text-sm px-2 py-1 border rounded hover:bg-gray-100"
-                    disabled={questions.length === 0}
-                  >
-                    Select all on page
-                  </button>
-                </div>
-              </div>
-
-              {error && <div className="text-sm text-red-600">{error}</div>}
-
-              <div className="max-h-64 overflow-y-auto space-y-2 border border-gray-100 p-2 rounded-lg">
-                {questions.length === 0 && !loading && <div className="text-sm text-gray-500">No rearrange questions found.</div>}
-
-                {questions.map(q => {
-                  const isSelected = selectedIds.includes(q.id);
-                  return (
-                    <div
-                      key={q.id}
-                      className={`flex items-start gap-3 p-3 rounded-lg transition-all border ${
-                        isSelected ? 'border-indigo-300 bg-indigo-50' : 'border-transparent hover:border-gray-200'
-                      }`}
-                    >
-                      <label className="flex items-center gap-2 cursor-pointer select-none">
-                        <input
-                          type="checkbox"
-                          checked={isSelected}
-                          onChange={() => toggleQuestion(q.id)}
-                          className="w-5 h-5 rounded-md focus:ring-0"
-                        />
-                      </label>
-
-                      <div className="flex-1">
-                        <div className="flex items-center justify-between">
-                          <div className="flex-1" onClick={() => handleRearrangePreview(q)} role="button">
-                            <RearrangeCard rearrange={q} onPreview={handleRearrangePreview} label={true} />
-                          </div>
-
-                          {isSelected ? (
-                            <div className="ml-3 flex items-center gap-1 text-sm text-indigo-700">
-                              <Check className="w-4 h-4" />
-                              <span>Selected</span>
-                            </div>
-                          ) : null}
-                        </div>
-                      </div>
-                    </div>
-                  );
-                })}
-              </div>
->>>>>>> 06a08b2ca9a5f94dd4c837293f5a81e13be2a355
 
               <div className="flex items-center justify-between mt-2">
-                <div className="text-sm text-gray-500">Page {page} — {selectedIds.length} selected</div>
+                <div className="text-sm text-gray-500">Page {page}</div>
                 <div className="flex gap-2">
                   <button onClick={() => setPage(p => Math.max(1, p-1))} disabled={page===1} className="px-2 py-1 text-sm border rounded disabled:opacity-50">Prev</button>
                   <button onClick={() => setPage(p => p+1)} disabled={total!=null && page*perPage >= (total||0)} className="px-2 py-1 text-sm border rounded disabled:opacity-50">Next</button>
@@ -391,8 +288,6 @@ const SelectRearrange: React.FC<SelectRearrangeProps> = ({
           )}
         </div>
       </div>
-
-      <RearrangePreview rearrange={previewRearrange} isOpen={isRearrangePreviewOpen} onClose={handleCloseRearrangePreview} />
     </div>
   );
 };
