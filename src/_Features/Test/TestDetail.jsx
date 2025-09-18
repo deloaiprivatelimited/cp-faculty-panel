@@ -7,10 +7,12 @@ import AddSectionModal from './AddSectionModal.jsx';
 import EditSectionModal from './EditSectionModal.jsx';
 import EditTestModal from './EditTestModal.tsx';
 import AssignStudentsModal from './AssignStudentsModal.jsx';
+// import UnassignStudentsModal from './UnassignStudentsModal.jsx';
+import UnassignStudentsModal from './UnAssignStudentModal.tsx';
 import { useParams } from 'react-router-dom';
 import { privateAxios } from '../../utils/axios.js'; // adjust path as needed
 import ListQuestionCards from './SectionContent/utils/ListSectionQuestions/index.tsx';
-import { showError } from '../../utils/toast.js';
+import { showError, showSuccess } from '../../utils/toast.js';
 const FullPageLoader = ({ message = 'Loading...' }) => (
   <div className="fixed inset-0 flex items-center justify-center bg-white z-50">
     <div className="flex flex-col items-center gap-4">
@@ -40,6 +42,7 @@ const TestDetail = ({
   const [sectionsOpen, setSectionsOpen] = useState([]);
   const [loadingSections, setLoadingSections] = useState(false);
   const [sectionsError, setSectionsError] = useState(null);
+const [isUnassignStudentsModalOpen, setIsUnassignStudentsModalOpen] = useState(false);
 
   const [isAddSectionModalOpen, setIsAddSectionModalOpen] = useState(false);
   const [isEditSectionModalOpen, setIsEditSectionModalOpen] = useState(false);
@@ -92,7 +95,7 @@ const handleAssign = async (studentIds) => {
       const created = summary.created ?? 0;
       const skipped = summary.skipped ?? 0;
       const errors = summary.errors ?? 0;
-      showError(`Assigned: ${created} created, ${skipped} skipped, ${errors} errors.`);
+      showSuccess(` ${created} Assigned, ${skipped} skipped, ${errors} errors.`);
 
       // optionally refresh sections/tests or assignedStudents list
       // if server returns updated test/assignments, fetch it here:
@@ -285,15 +288,16 @@ const handleAssign = async (studentIds) => {
             >
               <Users size={18} style={{ color: '#374151' }} />
               <span>Assign Students</span>
-              {assignedCount > 0 && (
-                <span
-                  className="absolute -top-2 -right-2 text-xs rounded-full w-5 h-5 flex items-center justify-center"
-                  style={{ backgroundColor: PRIMARY, color: SECONDARY }}
-                >
-                  {assignedCount}
-                </span>
-              )}
+           
             </button>
+            <button
+  onClick={() => setIsUnassignStudentsModalOpen(true)}
+  className="flex items-center gap-2 px-4 py-2 rounded-lg transition-colors ml-2"
+  style={{ backgroundColor: assignedCount === 0 ? '#f3f4f6' : '#fff', color: '#1f2937', border: '1px solid #e5e7eb' }}
+>
+  <Users size={18} style={{ color: '#374151' }} />
+  <span>Unassign Students</span>
+</button>
 
             <button
               onClick={() => setIsEditTestModalOpen(true)}
@@ -409,12 +413,36 @@ const handleAssign = async (studentIds) => {
        
             <AssignStudentsModal
           testId={test.id}
-          testName={test.name}
+          testName={test.test_name}
           isOpen={isAssignStudentsModalOpen}
           onClose={() => setIsAssignStudentsModalOpen(false)}
           onAssign={handleAssign}
         />
       )}
+      {isUnassignStudentsModalOpen && (
+  <UnassignStudentsModal
+    testId={test.id}
+    testName={test.test_name}
+    isOpen={isUnassignStudentsModalOpen}
+    onClose={() => setIsUnassignStudentsModalOpen(false)}
+    onUnassignCompleted={(summary) => {
+      // summary is the server response .data (created/removed/skipped etc)
+      // refresh assigned count / assigned students. simplest: refetch sections/tests or fetch assigned list
+      // small UX: show summary via toast, then refresh sections/state
+      try {
+        const removed = summary?.removed ?? summary?.data?.removed ?? 0;
+        const skipped = summary?.skipped ?? summary?.data?.skipped ?? 0;
+        const errors = summary?.errors ?? summary?.data?.errors ?? 0;
+        showSuccess(`${removed} Unassigned, ${skipped} skipped, ${errors} errors.`);
+      } catch (e) { /* ignore */ }
+
+      // refresh test data / assigned count: re-fetch sections/test (you already have fetchSections)
+      if (testId) {
+        fetchSections(testId);
+      }
+    }}
+  />
+)}
     </div>
   );
 };
