@@ -1,8 +1,8 @@
 // components/MCQList.jsx
-import React from 'react';
-import { Search, ChevronLeft, ChevronRight, BookOpen } from 'lucide-react';
-import MCQCard from './MCQCard';
-import MCQPreview from './MCQPreview';
+import React from "react";
+import { Search, ChevronLeft, ChevronRight, BookOpen } from "lucide-react";
+import MCQCard from "./MCQCard";
+import MCQPreview from "./MCQPreview";
 
 // Controlled / presentational MCQ list component (no backend calls).
 // Props:
@@ -13,15 +13,15 @@ import MCQPreview from './MCQPreview';
 // - onSearchChange, onTopicChange, onSubtopicChange, onDifficultyChange, onPageChange, onItemsPerPageChange, onResetFilters
 
 const MCQList = ({
-    heading= '',
+  heading = "",
   mcqData = { items: [], page: 1, per_page: 5, total: 0 },
   loading = false,
   error = null,
 
-  searchTerm = '',
-  selectedTopic = '',
-  selectedSubtopic = '',
-  selectedDifficulty = '',
+  searchTerm = "",
+  selectedTopic = "",
+  selectedSubtopic = "",
+  selectedDifficulty = "",
   currentPage = 1,
   itemsPerPage = 5,
 
@@ -36,40 +36,51 @@ const MCQList = ({
   onPageChange = () => {},
   onItemsPerPageChange = () => {},
   onResetFilters = () => {},
-  addEnabled=false,
-  handleAdd = ()=>{},
+  addEnabled = false,
+  handleAdd = () => {},
   editEnabled = false,
   handleEdit = (mcq) => {},
   deleteEnabled = false,
   handleDelete = (mcq) => {},
-
-  
 }) => {
   const [previewMCQ, setPreviewMCQ] = React.useState(null);
   const [isPreviewOpen, setIsPreviewOpen] = React.useState(false);
 
   // Decide whether server-side pagination is in effect.
-  const serverTotal = typeof mcqData.total === 'number' ? mcqData.total : null;
-  const serverPage = typeof mcqData.page === 'number' ? mcqData.page : null;
-  const serverPerPage = typeof mcqData.per_page === 'number' ? mcqData.per_page : null;
+  const serverTotal = typeof mcqData.total === "number" ? mcqData.total : null;
+  const serverPage = typeof mcqData.page === "number" ? mcqData.page : null;
+  const serverPerPage =
+    typeof mcqData.per_page === "number" ? mcqData.per_page : null;
 
-  const isServerPaginated = serverTotal !== null && serverTotal > (mcqData.items?.length ?? 0);
+  const isServerPaginated =
+    serverTotal !== null && serverTotal > (mcqData.items?.length ?? 0);
 
   // Client-side filtering (only used when server isn't doing full pagination)
   const clientFilteredMCQs = React.useMemo(() => {
     if (isServerPaginated) return mcqData.items ?? [];
     const items = mcqData.items ?? [];
-    const q = (searchTerm || '').toLowerCase();
-    return items.filter(mcq => {
+    const q = (searchTerm || "").toLowerCase();
+    return items.filter((mcq) => {
       const matchesSearch =
-        (mcq.title || '').toLowerCase().includes(q) ||
-        (mcq.question_text || '').toLowerCase().includes(q);
+        (mcq.title || "").toLowerCase().includes(q) ||
+        (mcq.question_text || "").toLowerCase().includes(q);
       const matchesTopic = !selectedTopic || mcq.topic === selectedTopic;
-      const matchesSubtopic = !selectedSubtopic || mcq.subtopic === selectedSubtopic;
-      const matchesDifficulty = !selectedDifficulty || mcq.difficulty_level === selectedDifficulty;
-      return matchesSearch && matchesTopic && matchesSubtopic && matchesDifficulty;
+      const matchesSubtopic =
+        !selectedSubtopic || mcq.subtopic === selectedSubtopic;
+      const matchesDifficulty =
+        !selectedDifficulty || mcq.difficulty_level === selectedDifficulty;
+      return (
+        matchesSearch && matchesTopic && matchesSubtopic && matchesDifficulty
+      );
     });
-  }, [isServerPaginated, mcqData.items, searchTerm, selectedTopic, selectedSubtopic, selectedDifficulty]);
+  }, [
+    isServerPaginated,
+    mcqData.items,
+    searchTerm,
+    selectedTopic,
+    selectedSubtopic,
+    selectedDifficulty,
+  ]);
 
   // Items to display on this page
   let paginatedMCQs = [];
@@ -86,7 +97,10 @@ const MCQList = ({
     const totalFiltered = clientFilteredMCQs.length;
     totalPages = Math.max(1, Math.ceil(totalFiltered / itemsPerPage));
     const startIndex = (currentPage - 1) * itemsPerPage;
-    paginatedMCQs = clientFilteredMCQs.slice(startIndex, startIndex + itemsPerPage);
+    paginatedMCQs = clientFilteredMCQs.slice(
+      startIndex,
+      startIndex + itemsPerPage
+    );
     totalItemsToShow = totalFiltered;
   }
 
@@ -102,7 +116,7 @@ const MCQList = ({
   const handlePage = (page) => {
     // Notify parent — parent should fetch new page in server mode
     onPageChange(page);
-    window.scrollTo({ top: 0, behavior: 'smooth' });
+    window.scrollTo({ top: 0, behavior: "smooth" });
   };
 
   // Helper to render compact page range (first, ..., cur-2..cur+2, ..., last)
@@ -111,7 +125,12 @@ const MCQList = ({
     const pages = new Set();
     pages.add(1);
     pages.add(total);
-    for (let i = Math.max(1, cur - windowSize); i <= Math.min(total, cur + windowSize); i++) pages.add(i);
+    for (
+      let i = Math.max(1, cur - windowSize);
+      i <= Math.min(total, cur + windowSize);
+      i++
+    )
+      pages.add(i);
     return Array.from(pages).sort((a, b) => a - b);
   };
 
@@ -119,27 +138,29 @@ const MCQList = ({
 
   // Display counts text
   const showingCount = paginatedMCQs.length;
-  const totalDisplayText = serverTotal !== null ? serverTotal : totalItemsToShow;
+  const totalDisplayText =
+    serverTotal !== null ? serverTotal : totalItemsToShow;
 
   return (
     <div className="min-h-screen bg-gray-50 ">
       {/* Sticky Search & Filters */}
       <div className="sticky top-0 z-40 bg-white shadow-sm border-b border-[#E5E5E5]">
-        <div className="max-w-[90%] mx-auto px-4 py-8">
-<div className="flex items-center justify-between mb-4">
-  <h1 className="text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-tight">
-    {heading || "MCQ Questions"}
-  </h1>
+        <div className="max-w-full mx-auto px-4 py-8">
+          <div className="flex items-center justify-between mb-4">
+            <h1 className="text-2xl md:text-3xl font-bold text-[#1A1A1A] tracking-tight">
+              {heading || "MCQ Questions"}
+            </h1>
 
-  {addEnabled && (
-    <button
-      onClick={handleAdd}
-      className="px-4 py-2 bg-[#4CA466] text-white rounded-xl hover:bg-[#3C8A52] transition-colors font-medium"
-    >
-      + Add
-    </button>
-  )}
-</div>        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
+            {addEnabled && (
+              <button
+                onClick={handleAdd}
+                className="px-4 py-2 bg-[#4CA466] text-white rounded-xl hover:bg-[#3C8A52] transition-colors font-medium"
+              >
+                + Add
+              </button>
+            )}
+          </div>{" "}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-5 gap-4 mb-4">
             <div className="lg:col-span-2">
               <div className="relative">
                 <Search className="absolute left-4 top-1/2 transform -translate-y-1/2 text-[#555555] w-5 h-5" />
@@ -160,8 +181,10 @@ const MCQList = ({
                 className="w-full p-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] appearance-none cursor-pointer"
               >
                 <option value="">All Topics</option>
-                {topics.map(topic => (
-                  <option key={topic} value={topic}>{topic}</option>
+                {topics.map((topic) => (
+                  <option key={topic} value={topic}>
+                    {topic}
+                  </option>
                 ))}
               </select>
             </div>
@@ -173,8 +196,10 @@ const MCQList = ({
                 className="w-full p-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] appearance-none cursor-pointer"
               >
                 <option value="">All Subtopics</option>
-                {subtopics.map(subtopic => (
-                  <option key={subtopic} value={subtopic}>{subtopic}</option>
+                {subtopics.map((subtopic) => (
+                  <option key={subtopic} value={subtopic}>
+                    {subtopic}
+                  </option>
                 ))}
               </select>
             </div>
@@ -186,13 +211,14 @@ const MCQList = ({
                 className="w-full p-3 bg-[#F9FAFB] border-0 rounded-xl focus:ring-2 focus:ring-[#4CA466] focus:bg-white outline-none transition-all duration-200 text-[#1A1A1A] appearance-none cursor-pointer"
               >
                 <option value="">All Levels</option>
-                {difficulties.map(difficulty => (
-                  <option key={difficulty} value={difficulty}>{difficulty}</option>
+                {difficulties.map((difficulty) => (
+                  <option key={difficulty} value={difficulty}>
+                    {difficulty}
+                  </option>
                 ))}
               </select>
             </div>
           </div>
-
           <div className="flex items-center justify-between">
             <p className="text-sm text-[#555555]">
               Showing {showingCount} of {totalDisplayText} questions
@@ -208,21 +234,35 @@ const MCQList = ({
       </div>
 
       {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-6 pb-24">
-        {loading && <div className="text-center py-12">Loading questions...</div>}
+      <div className="w-full mx-auto px-4 py-6 pb-24">
+        {loading && (
+          <div className="text-center py-12">Loading questions...</div>
+        )}
         {error && <div className="text-center py-12 text-red-600">{error}</div>}
 
         <div className="space-y-4">
-          {paginatedMCQs.map(mcq => (
-            <MCQCard key={mcq.id} mcq={mcq} onPreview={handlePreview} editEnabled={editEnabled} handleEdit={handleEdit} deleteEnabled={deleteEnabled} handleDelete={handleDelete} />
+          {paginatedMCQs.map((mcq) => (
+            <MCQCard
+              key={mcq.id}
+              mcq={mcq}
+              onPreview={handlePreview}
+              editEnabled={editEnabled}
+              handleEdit={handleEdit}
+              deleteEnabled={deleteEnabled}
+              handleDelete={handleDelete}
+            />
           ))}
         </div>
 
         {!loading && paginatedMCQs.length === 0 && (
           <div className="text-center py-16">
             <BookOpen className="w-16 h-16 text-[#E5E5E5] mx-auto mb-4" />
-            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">No questions found</h3>
-            <p className="text-[#555555] mb-6">Try adjusting your search criteria or filters.</p>
+            <h3 className="text-lg font-medium text-[#1A1A1A] mb-2">
+              No questions found
+            </h3>
+            <p className="text-[#555555] mb-6">
+              Try adjusting your search criteria or filters.
+            </p>
             <button
               onClick={onResetFilters}
               className="px-6 py-3 bg-[#4CA466] text-white rounded-xl hover:bg-[#3C8A52] transition-colors font-medium"
@@ -273,8 +313,8 @@ const MCQList = ({
                           onClick={() => handlePage(p)}
                           className={`px-3 py-2 rounded-lg text-sm font-medium transition-colors ${
                             currentPage === p
-                              ? 'bg-[#4CA466] text-white'
-                              : 'border border-[#E5E5E5] hover:bg-[#F9FAFB] text-[#555555]'
+                              ? "bg-[#4CA466] text-white"
+                              : "border border-[#E5E5E5] hover:bg-[#F9FAFB] text-[#555555]"
                           }`}
                         >
                           {p}
@@ -285,7 +325,9 @@ const MCQList = ({
                 </div>
 
                 <button
-                  onClick={() => handlePage(Math.min(currentPage + 1, totalPages))}
+                  onClick={() =>
+                    handlePage(Math.min(currentPage + 1, totalPages))
+                  }
                   disabled={currentPage === totalPages}
                   className="p-2 rounded-lg border border-[#E5E5E5] hover:bg-[#F9FAFB] disabled:opacity-50 disabled:cursor-not-allowed transition-colors"
                 >
@@ -301,7 +343,11 @@ const MCQList = ({
         </div>
       )}
 
-      <MCQPreview mcq={previewMCQ} isOpen={isPreviewOpen} onClose={handleClosePreview} />
+      <MCQPreview
+        mcq={previewMCQ}
+        isOpen={isPreviewOpen}
+        onClose={handleClosePreview}
+      />
     </div>
   );
 };

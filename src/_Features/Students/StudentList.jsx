@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useCallback } from "react";
 import { privateAxios } from "../../utils/axios";
-import { ChevronLeft, ChevronRight, Plus } from "lucide-react";
+import { ChevronLeft, ChevronRight, Plus, Search, Filter, Download } from "lucide-react";
 import { useNavigate } from "react-router-dom";
 
 // 🔹 UI → Backend mappings
@@ -209,33 +209,237 @@ function MyComponent() {
   };
 
   return (
-    <div className="w-full pl-6">
-      <div className="w-full mx-auto">
-        {/* Header Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6 flex justify-between items-center">
-          <div>
-            <h1 className="text-3xl font-bold text-gray-800 mb-2">BMSIT</h1>
-            <p className="text-gray-600 text-lg">
-              Total Students:{" "}
-              <span className="font-semibold text-[#4CA466]">
-                {totalStudents}
-              </span>
-            </p>
-          </div>
-            <div className="flex gap-6">
-              <button
-            onClick={() =>window.open(`/students/bulk-upload` , "_blank")}
-            className="bg-[#4CA466] hover:bg-[#3d8a54] text-white px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 shadow-md flex items-center gap-2"
-          >
-            <Plus size={18} />Bulk Upload
-          </button>
-          <button
-            onClick={() => setShowAddModal(true)}
-            className="bg-[#4CA466] hover:bg-[#3d8a54] text-white px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 shadow-md flex items-center gap-2"
-          >
-            <Plus size={18} /> Add Student
-          </button>
+    <div className="w-full">
+      <div className="w-full mx-auto bg-gray-50">
+        {/* Header Section - Enhanced */}
+        <div className="bg-white w-full shadow-lg border-b border-gray-100 mb-8">
+          {/* Top Header Bar */}
+          <div className="px-6 py-6 border-b border-gray-100">
+            <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between gap-6">
+              {/* Title Section */}
+              <div className="flex items-center">
+                <div>
+                  <h1 className="text-3xl font-bold text-gray-800 leading-tight">
+                    BMSIT Student Portal
+                  </h1>
+                  <div className="flex items-center gap-2 mt-1">
+                    <div className="w-2 h-2 bg-[#4CA466] rounded-full animate-pulse"></div>
+                    <p className="text-gray-600 text-sm">
+                      Total Students: <span className="font-semibold text-[#4CA466] text-base">{totalStudents}</span>
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Action Buttons */}
+              <div className="flex flex-wrap items-center gap-3">
+                <button
+                  onClick={() => window.open(`/students/bulk-upload`, "_blank")}
+                  className="group bg-gradient-to-r from-[#4CA466] to-[#3d8a54] hover:from-[#3d8a54] hover:to-[#2d7042] text-white px-5 py-2.5 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center gap-2 text-sm"
+                >
+                  <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
+                  Bulk Upload
+                </button>
+                <button
+                  onClick={() => setShowAddModal(true)}
+                  className="group bg-gradient-to-r from-[#4CA466] to-[#3d8a54] hover:from-[#3d8a54] hover:to-[#2d7042] text-white px-5 py-2.5 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-lg flex items-center gap-2 text-sm"
+                >
+                  <Plus size={16} className="group-hover:rotate-90 transition-transform duration-300" />
+                  Add Student
+                </button>
+              </div>
             </div>
+          </div>
+
+          {/* Search and Filter Section */}
+          <div className="px-8 py-4">
+            <div className="flex flex-col lg:flex-row gap-4 items-stretch lg:items-center">
+              {/* Enhanced Search Bar */}
+              <div className="flex-1 relative group">
+                <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                  <Search size={18} className="text-gray-400 group-focus-within:text-[#4CA466] transition-colors duration-200" />
+                </div>
+                <input
+                  type="text"
+                  placeholder="Search students by name, USN, or email..."
+                  className="w-full pl-10 pr-4 py-3.5 border border-gray-200 rounded-xl focus:ring-2 focus:ring-[#4CA466]/20 focus:border-[#4CA466] outline-none transition-all duration-200 bg-gray-50 hover:bg-white group-focus-within:bg-white text-sm placeholder-gray-400"
+                  value={filters.search}
+                  onChange={(e) =>
+                    setFilters((prev) => ({
+                      ...prev,
+                      search: e.target.value,
+                      page: 1,
+                    }))
+                  }
+                />
+              </div>
+
+              {/* Enhanced Action Buttons */}
+              <div className="flex items-center gap-3">
+                <button
+                  onClick={downloadCSV}
+                  className="group bg-white hover:bg-[#4CA466] border-2 border-[#4CA466] text-[#4CA466] hover:text-white px-5 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 hover:shadow-md flex items-center gap-2 text-sm"
+                >
+                  <Download size={16} className="group-hover:animate-bounce" />
+                  Export CSV
+                </button>
+                <button
+                  onClick={() => setShowFilters(!showFilters)}
+                  className={`group px-5 py-3 rounded-xl font-medium transition-all duration-300 transform hover:scale-105 flex items-center gap-2 text-sm ${
+                    showFilters
+                      ? 'bg-[#4CA466] text-white shadow-lg'
+                      : 'bg-white hover:bg-[#4CA466] border-2 border-[#4CA466] text-[#4CA466] hover:text-white hover:shadow-md'
+                  }`}
+                >
+                  <Filter size={16} className={`transition-transform duration-300 ${showFilters ? 'rotate-180' : 'group-hover:rotate-12'}`} />
+                  Filters
+                  <div className={`w-5 h-5 rounded-full flex items-center justify-center text-xs font-bold transition-all duration-300 ${
+                    showFilters 
+                      ? 'bg-white text-[#4CA466]' 
+                      : 'bg-[#4CA466] text-white group-hover:bg-white group-hover:text-[#4CA466]'
+                  }`}>
+                    {showFilters ? '−' : '+'}
+                  </div>
+                </button>
+              </div>
+            </div>
+          </div>
+
+          {/* Enhanced Filters Section */}
+          {showFilters && (
+            <div className="px-8 pb-6">
+              <div className="bg-gradient-to-br from-gray-50 to-gray-100 rounded-2xl shadow-inner p-6 border border-gray-200">
+                <div className="flex items-center gap-2 mb-6">
+                  <div className="w-1 h-6 bg-gradient-to-b from-[#4CA466] to-[#3d8a54] rounded-full"></div>
+                  <h3 className="text-lg font-semibold text-gray-800">Advanced Filters</h3>
+                </div>
+                
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {/* Year Filter */}
+                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                    <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                      <div className="w-3 h-3 bg-[#4CA466] rounded-full"></div>
+                      Year of Study
+                    </h4>
+                    <div className="space-y-3">
+                      {availableYears.map((year) => (
+                        <label key={year} className="flex items-center group cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filters.year.includes(year)}
+                            onChange={() => handleCheckboxChange("year", year)}
+                            className="w-4 h-4 text-[#4CA466] rounded border-gray-300 focus:ring-[#4CA466]/20 focus:ring-2 transition-all duration-200"
+                          />
+                          <span className="ml-3 text-gray-700 group-hover:text-[#4CA466] transition-colors duration-200 font-medium">
+                            Year {year}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Gender Filter */}
+                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                    <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                      <div className="w-3 h-3 bg-[#4CA466] rounded-full"></div>
+                      Gender
+                    </h4>
+                    <div className="space-y-3">
+                      {availableGenders.map((gender) => (
+                        <label key={gender} className="flex items-center group cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filters.gender.includes(gender)}
+                            onChange={() => handleCheckboxChange("gender", gender)}
+                            className="w-4 h-4 text-[#4CA466] rounded border-gray-300 focus:ring-[#4CA466]/20 focus:ring-2 transition-all duration-200"
+                          />
+                          <span className="ml-3 text-gray-700 group-hover:text-[#4CA466] transition-colors duration-200 font-medium">
+                            {gender}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Branch Filter */}
+                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                    <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                      <div className="w-3 h-3 bg-[#4CA466] rounded-full"></div>
+                      Branch
+                    </h4>
+                    <div className="space-y-3">
+                      {availableBranches.map((branch) => (
+                        <label key={branch} className="flex items-center group cursor-pointer">
+                          <input
+                            type="checkbox"
+                            checked={filters.branch.includes(branch)}
+                            onChange={() => handleCheckboxChange("branch", branch)}
+                            className="w-4 h-4 text-[#4CA466] rounded border-gray-300 focus:ring-[#4CA466]/20 focus:ring-2 transition-all duration-200"
+                          />
+                          <span className="ml-3 text-gray-700 group-hover:text-[#4CA466] transition-colors duration-200 font-medium">
+                            {branch}
+                          </span>
+                        </label>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Status Filter */}
+                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200">
+                    <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                      <div className="w-3 h-3 bg-[#4CA466] rounded-full"></div>
+                      Status
+                    </h4>
+                    <select
+                      value={filters.status}
+                      onChange={(e) => handleInputChange("status", e.target.value)}
+                      className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#4CA466]/20 focus:border-[#4CA466] outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-sm"
+                    >
+                      <option value="">All Status</option>
+                      <option value="Active">Active</option>
+                      <option value="Inactive">Inactive</option>
+                    </select>
+                  </div>
+
+                  {/* CGPA Range Filter */}
+                  <div className="bg-white p-5 rounded-xl shadow-sm border border-gray-100 hover:shadow-md transition-shadow duration-200 lg:col-span-2">
+                    <h4 className="font-semibold text-gray-700 mb-4 flex items-center gap-2">
+                      <div className="w-3 h-3 bg-[#4CA466] rounded-full"></div>
+                      CGPA Range
+                    </h4>
+                    <div className="flex gap-4">
+                      <div className="flex-1">
+                        <label className="block text-sm text-gray-600 mb-2">Minimum</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="10"
+                          value={filters.cgpaMin}
+                          onChange={(e) => handleInputChange("cgpaMin", e.target.value)}
+                          placeholder="0.0"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#4CA466]/20 focus:border-[#4CA466] outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-sm"
+                        />
+                      </div>
+                      <div className="flex-1">
+                        <label className="block text-sm text-gray-600 mb-2">Maximum</label>
+                        <input
+                          type="number"
+                          step="0.1"
+                          min="0"
+                          max="10"
+                          value={filters.cgpaMax}
+                          onChange={(e) => handleInputChange("cgpaMax", e.target.value)}
+                          placeholder="10.0"
+                          className="w-full px-4 py-3 border border-gray-200 rounded-lg focus:ring-2 focus:ring-[#4CA466]/20 focus:border-[#4CA466] outline-none transition-all duration-200 bg-gray-50 hover:bg-white text-sm"
+                        />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
         </div>
 
         {/* 🔹 Add Student Modal */}
@@ -518,161 +722,9 @@ function MyComponent() {
           </div>
         )}
 
-        {/* Controls Section */}
-        <div className="bg-white rounded-lg shadow-md p-6 mb-6">
-          <div className="flex flex-col md:flex-row gap-4 items-center">
-            {/* Search Bar */}
-            <div className="flex-1 w-full">
-              <input
-                type="text"
-                placeholder="Search students by name, USN, or email..."
-                className="w-full px-4 py-3 border border-gray-300 rounded-lg focus:ring-2 focus:ring-[#4CA466] focus:border-[#4CA466] outline-none transition-all"
-                onChange={(e) =>
-                  setFilters((prev) => ({
-                    ...prev,
-                    search: e.target.value,
-                    page: 1,
-                  }))
-                }
-              />
-            </div>
-
-            {/* Action Buttons */}
-            <div className="flex gap-3">
-              <button
-                onClick={downloadCSV}
-                className="bg-[#4CA466] hover:bg-[#3d8a54] text-white px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105 shadow-md"
-              >
-                Download All
-              </button>
-              <button
-                onClick={() => setShowFilters(!showFilters)}
-                className="border-2 border-[#4CA466] text-[#4CA466] hover:bg-[#4CA466] hover:text-white px-6 py-3 rounded-lg font-medium transition-all transform hover:scale-105"
-              >
-                Filters {showFilters ? "−" : "+"}
-              </button>
-            </div>
-          </div>
-        </div>
-
-        {/* Filters Section */}
-        {showFilters && (
-          <div className="bg-white rounded-lg shadow-md p-6 mb-6 transform transition-all duration-300">
-            <h3 className="text-lg font-semibold text-gray-800 mb-4">
-              Filter Options
-            </h3>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-              {/* Year */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-700 mb-3">
-                  Year of Study
-                </h4>
-                <div className="space-y-2">
-                  {availableYears.map((year) => (
-                    <label key={year} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={filters.year.includes(year)}
-                        onChange={() => handleCheckboxChange("year", year)}
-                        className="w-4 h-4 text-[#4CA466] rounded border-gray-300 focus:ring-[#4CA466]"
-                      />
-                      <span className="ml-2 text-gray-700">{year}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Gender */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-700 mb-3">Gender</h4>
-                <div className="space-y-2">
-                  {availableGenders.map((gender) => (
-                    <label key={gender} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={filters.gender.includes(gender)}
-                        onChange={() => handleCheckboxChange("gender", gender)}
-                        className="w-4 h-4 text-[#4CA466] rounded border-gray-300 focus:ring-[#4CA466]"
-                      />
-                      <span className="ml-2 text-gray-700">{gender}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Branch */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-700 mb-3">Branch</h4>
-                <div className="space-y-2">
-                  {availableBranches.map((branch) => (
-                    <label key={branch} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={filters.branch.includes(branch)}
-                        onChange={() => handleCheckboxChange("branch", branch)}
-                        className="w-4 h-4 text-[#4CA466] rounded border-gray-300 focus:ring-[#4CA466]"
-                      />
-                      <span className="ml-2 text-gray-700">{branch}</span>
-                    </label>
-                  ))}
-                </div>
-              </div>
-
-              {/* Status */}
-              <div className="bg-gray-50 p-4 rounded-lg">
-                <h4 className="font-medium text-gray-700 mb-3">Status</h4>
-                <select
-                  value={filters.status}
-                  onChange={(e) => handleInputChange("status", e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#4CA466] focus:border-[#4CA466] outline-none"
-                >
-                  <option value="">All Status</option>
-                  <option value="Active">Active</option>
-                  <option value="Inactive">Inactive</option>
-                </select>
-              </div>
-
-              {/* CGPA Range */}
-              <div className="bg-gray-50 p-4 rounded-lg lg:col-span-2">
-                <h4 className="font-medium text-gray-700 mb-3">CGPA Range</h4>
-                <div className="flex gap-3">
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="10"
-                      value={filters.cgpaMin}
-                      onChange={(e) =>
-                        handleInputChange("cgpaMin", e.target.value)
-                      }
-                      placeholder="0.0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#4CA466] focus:border-[#4CA466] outline-none"
-                    />
-                  </div>
-                  <div className="flex-1">
-                    <input
-                      type="number"
-                      step="0.1"
-                      min="0"
-                      max="10"
-                      value={filters.cgpaMax}
-                      onChange={(e) =>
-                        handleInputChange("cgpaMax", e.target.value)
-                      }
-                      placeholder="10.0"
-                      className="w-full px-3 py-2 border border-gray-300 rounded-md focus:ring-2 focus:ring-[#4CA466] focus:border-[#4CA466] outline-none"
-                    />
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
-
         {/* Table Section (same as before) */}
         {/* Table */}
-        <div className="bg-white rounded-lg shadow-md overflow-hidden">
+        <div className="bg-fray-50 px-8 shadow-md overflow-hidden">
           <div className="overflow-x-auto">
             <table className="w-full">
               <thead className="bg-gray-50 border-b border-gray-200">
@@ -717,7 +769,7 @@ function MyComponent() {
                   students.map((student, idx) => (
                     <tr
                       key={student.id}
-                      className="hover:bg-gray-50 transition-colors"
+                      className="hover:bg-white transition-colors"
                     >
                       <td className="px-6 py-4 text-sm text-gray-800">
                         {idx + 1}

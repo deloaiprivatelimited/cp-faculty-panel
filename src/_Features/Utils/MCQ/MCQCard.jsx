@@ -109,8 +109,6 @@ const MCQCard = ({
             </span>
           </div>
         </div>
-
-       
       </div>
     </div>
   );
