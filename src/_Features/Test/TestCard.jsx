@@ -1,7 +1,9 @@
 import React from 'react';
-import { Clock, Users, FileText, Tag, Edit, Settings } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
+import { Clock, Users, FileText, Tag, Edit, Settings,BarChart2,Trash2 } from 'lucide-react';
 
-const TestCard = ({ test, onClick,onEdit }) => {
+const TestCard = ({ test, onClick,onEdit,handleDelete ,deletingId}) => {
+  const navigate = useNavigate();
   const formatDuration = (seconds) => {
     const hours = Math.floor(seconds / 3600);
     const minutes = Math.floor((seconds % 3600) / 60);
@@ -65,6 +67,19 @@ onClick={(e) => {
           >
             <Edit className="w-4 h-4" />
           </button>
+          {/* Results button - navigates to /test/results/{test.id} */}
+<button
+onClick={(e) => {
+e.stopPropagation();
+e.preventDefault();
+// Navigate to the results page for this test
+navigate(`/test/results/${test.id}`);
+}}
+className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
+title="View Results"
+>
+<BarChart2 className="w-4 h-4" />
+</button>
           <button
             onClick={onClick}
             className="p-2 text-gray-400 hover:text-gray-600 transition-colors"
@@ -72,6 +87,22 @@ onClick={(e) => {
           >
             <Settings className="w-4 h-4" />
           </button>
+           {/* Delete button */}
+<button
+  onClick={(e) => {
+    e.stopPropagation();
+    e.preventDefault();
+    // call parent handler
+    handleDelete(test.id);
+  }}
+  className={`p-2 ${deletingId === test.id ? "opacity-60 pointer-events-none" : "text-red-500 hover:text-red-700"} transition-colors flex items-center`}
+  title="Delete Test"
+  disabled={deletingId === test.id}
+>
+  <Trash2 className="w-4 h-4" />
+  {deletingId === test.id && <span className="sr-only">Deleting...</span>}
+</button>
+
         </div>
       </div>
 

@@ -33,6 +33,9 @@ import AddMCQQuestion from "./_Features/MyQuestions/Questions/MCQ/AddMCQ"
 import ListMCQQuestions from "./_Features/MyQuestions/Questions/MCQ/ListMCQ"
 import EditRearrangeBuilder from "./_Features/MyQuestions/Questions/Rearrange/Edit/EditQuestionBuilder"
 import RearrangeBuilder from "./_Features/MyQuestions/Questions/Rearrange/RearrangeBuilder"
+import { TestResultsList } from './_Features/TestResults/components/TestResultsList.tsx';
+import { StudentDetailResults } from './_Features/TestResults/components/StudentDetailResults.tsx';
+
 const Layout = ({ children }) => {
   const location = useLocation();
   const path = location.pathname;
@@ -103,6 +106,21 @@ function App() {
               element={
                 <ProtectedRoute>
                   <TestDashboard />
+                </ProtectedRoute>
+              }
+            />  <Route
+              path="/test/results/:testId"
+              element={
+                <ProtectedRoute>
+                  <TestResultsList />
+                </ProtectedRoute>
+              }
+            />
+              <Route
+              path="/student/:studentId/results"
+              element={
+                <ProtectedRoute>
+                  <StudentDetailResults />
                 </ProtectedRoute>
               }
             />

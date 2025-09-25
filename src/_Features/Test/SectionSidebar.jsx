@@ -1,5 +1,6 @@
 import React from 'react';
-import { Clock, Unlock, Edit3, Plus, BookOpen, Timer } from 'lucide-react';
+import { Clock, Unlock, Edit3, Plus, BookOpen, Timer ,Trash2} from 'lucide-react';
+// import { Button } from "@/components/ui/button";
 
 const SectionSidebar = ({
   timedSections = [],
@@ -7,6 +8,7 @@ const SectionSidebar = ({
   selectedSection,
   onSectionSelect,
   onSectionEdit,
+  onSectionDelete,
   onAdd,
   test
 }) => {
@@ -88,6 +90,24 @@ const SectionSidebar = ({
             >
               <Edit3 size={12} />
             </button>
+            <button
+onClick={(e) => {
+e.stopPropagation();
+// Console log the section id as requested
+console.log('delete section id:', section.id);
+// If a handler was passed in, call it
+onSectionDelete && onSectionDelete(section.id);
+}}
+className={`p-1.5 rounded-lg transition-all duration-200 hover:scale-110 ${
+isSelected
+? 'bg-white/20 text-white hover:bg-white/30'
+: 'bg-gray-100 text-gray-600 hover:bg-gray-200 group-hover:bg-gray-200'
+}`}
+aria-label={`Delete ${section.name}`}
+title="Delete section"
+>
+<Trash2 size={12} />
+</button>
           </div>
         </div>
 

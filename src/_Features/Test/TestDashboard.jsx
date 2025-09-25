@@ -17,10 +17,8 @@ const TAB_CONFIG = {
 
 const DEFAULT_PER_PAGE = 12;
 
-export default function TestDashboard({
-  
-  
-}) {
+export default function TestDashboard({}) {
+  const navigate = useNavigate();
   const [activeTab, setActiveTab] = useState("all");
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false);
 
@@ -28,52 +26,18 @@ export default function TestDashboard({
   const [tests, setTests] = useState([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
- // Edit modal state
+  // Edit modal state
   const [editingTest, setEditingTest] = useState(null);
   const [isEditModalOpen, setIsEditModalOpen] = useState(false);
   const [updating, setUpdating] = useState(false);
   // pagination & search state
- 
-  // open edit modal for a test
-  const handleOpenEdit = (test) => {
-    console.log(test)
-    setEditingTest(test);
-    setIsEditModalOpen(true);
-  };
-
-  // close edit modal
-  const handleCloseEdit = () => {
-    setEditingTest(null);
-    setIsEditModalOpen(false);
-  };
- // Perform update (used by EditTestModal)
-  const handleUpdate = async (testId, payload) => {
-    setUpdating(true);
-    try {
-    
-      // Parent may provide onTestUpdate; if not, do PUT directly
-        const res = await privateAxios.put(`/tests/${testId}`, payload);
-        // You may want to handle response shape; return to modal
-        // After successful update, refresh current page
-        setPage(1); // reset to first page, or keep current
-        // small delay and then refetch (your fetch effect will run because page changed)
-        setTimeout(() => {
-          setPage((p) => p); // trigger effect — keeps page same but safe
-        }, 150);
-        return res.data;
-      
-    } catch (err) {
-      console.error("Error updating test:", err);
-      // bubble error to modal caller
-      throw err;
-    } finally {
-      setUpdating(false);
-    }
-  };
   const [page, setPage] = useState(1);
   const [perPage, setPerPage] = useState(DEFAULT_PER_PAGE);
   const [totalPages, setTotalPages] = useState(1);
   const [totalCount, setTotalCount] = useState(0);
+
+  // delete state
+  const [deletingId, setDeletingId] = useState(null);
 
   // search with debounce
   const [q, setQ] = useState("");
@@ -102,77 +66,134 @@ export default function TestDashboard({
     setPage(1);
     setError(null);
   }, [activeTab, debouncedQ, perPage]);
- async function fetchTests() {
-      setLoading(true);
-      setError(null);
 
-      const cfg = TAB_CONFIG[activeTab] || TAB_CONFIG.all;
-      const endpoint = cfg.endpoint;
+  async function fetchTests() {
+    setLoading(true);
+    setError(null);
 
-      const params = {
-        page,
-        per_page: perPage,
-      };
-      if (debouncedQ) params.q = debouncedQ;
+    const cfg = TAB_CONFIG[activeTab] || TAB_CONFIG.all;
+    const endpoint = cfg.endpoint;
 
-      try {
-        const res = await privateAxios.get(endpoint, { params });
-        // expected shape: { success, message, data: { tests: [...], meta: { total, page, per_page, total_pages } } }
+    const params = {
+      page,
+      per_page: perPage,
+    };
+    if (debouncedQ) params.q = debouncedQ;
 
-        const data = res.data?.data || {};
-        const fetchedTests = data.tests || [];
-        const meta = data.meta || {};
-        console.log(fetchedTests)
+    try {
+      const res = await privateAxios.get(endpoint, { params });
+      const data = res.data?.data || {};
+      const fetchedTests = data.tests || [];
+      const meta = data.meta || {};
 
-        setTests(fetchedTests);
-        setTotalCount(meta.total ?? 0);
-        setTotalPages(meta.total_pages ?? 1);
-      } catch (err) {
-        console.error("Error fetching tests:", err);
-        setError(
-          err?.response?.data?.message ??
-            err?.message ??
-            "Unable to fetch tests. Please try again."
-        );
-      } finally {
-       setLoading(false);
-      }
+      setTests(fetchedTests);
+      setTotalCount(meta.total ?? 0);
+      setTotalPages(meta.total_pages ?? 1);
+    } catch (err) {
+      console.error("Error fetching tests:", err);
+      setError(
+        err?.response?.data?.message ??
+          err?.message ??
+          "Unable to fetch tests. Please try again."
+      );
+    } finally {
+      setLoading(false);
     }
+  }
 
   // core fetch logic
   useEffect(() => {
     let cancelled = false;
-
-   
     fetchTests();
     return () => {
       cancelled = true;
     };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [activeTab, page, perPage, debouncedQ]);
 
   // handle create -> close modal -> refetch
   const handleCreate = async (payload) => {
     try {
-      
-        // fallback: POST directly if parent didn't provide handler
-        await privateAxios.post("/tests/add", payload);
-    
+      await privateAxios.post("/tests/add", payload);
       setIsCreateModalOpen(false);
-      // refresh
       setPage(1);
-      // trigger fetch by toggling debouncedQ (or calling fetch by changing a key)
-      setDebouncedQ((s) => s); // noop - rely on effect to fetch since page changed
       // small delay to ensure backend persisted
       setTimeout(() => {
-        // force a re-fetch: ensure page set
         setPage(1);
-        fetchTests()
+        fetchTests();
       }, 200);
     } catch (err) {
       console.error("Error creating test:", err);
       throw err;
     }
   };
+
+  // open edit modal for a test
+  const handleOpenEdit = (test) => {
+    setEditingTest(test);
+    setIsEditModalOpen(true);
+  };
+
+  // close edit modal
+  const handleCloseEdit = () => {
+    setEditingTest(null);
+    setIsEditModalOpen(false);
+  };
+
+  // Perform update (used by EditTestModal)
+  const handleUpdate = async (testId, payload) => {
+    setUpdating(true);
+    try {
+      const res = await privateAxios.put(`/tests/${testId}`, payload);
+      // After successful update, refresh current page
+      setPage(1);
+      setTimeout(() => {
+        setPage((p) => p); // trigger effect — keeps page same but safe
+      }, 150);
+      return res.data;
+    } catch (err) {
+      console.error("Error updating test:", err);
+      throw err;
+    } finally {
+      setUpdating(false);
+    }
+  };
+
+  // NEW: handle deletion of a test
+const handleDelete = async (testId) => {
+  if (!testId) return;
+
+  // Ask for confirmation first
+  const confirmed = window.confirm("Are you sure you want to delete this test?");
+  if (!confirmed) return;
+
+  try {
+    setDeletingId(testId);
+    await privateAxios.delete(`/tests/${testId}`);
+
+    // Remove from current list
+    setTests((prev) => prev.filter((t) => t.id !== testId));
+    setTotalCount((c) => Math.max(0, c - 1));
+
+    // Handle empty page case
+    const willBeEmpty = tests.length === 1;
+    if (willBeEmpty && page > 1) {
+      setPage((p) => p - 1);
+    } else {
+      fetchTests();
+    }
+  } catch (err) {
+    console.error("Error deleting test:", err);
+    setError(
+      err?.response?.data?.message ??
+        err?.message ??
+        "Failed to delete the test. Please try again."
+    );
+  } finally {
+    setDeletingId(null);
+  }
+};
+
 
   // small helper to compute counts shown on tabs (uses server count when available)
   const shownCountFor = (tabKey) => {
@@ -240,10 +261,10 @@ export default function TestDashboard({
                   onClick={() => setActiveTab(key)}
                   className={`relative py-3 px-6 font-medium text-sm flex items-center gap-3 
                            transition-all duration-300 rounded-xl group overflow-hidden ${
-                    activeTab === key
-                      ? "bg-gradient-to-r from-[#4CA466] to-[#3d8a54] text-white shadow-lg"
-                      : "text-gray-600 hover:text-gray-900 hover:bg-white/80"
-                  }`}
+                             activeTab === key
+                               ? "bg-gradient-to-r from-[#4CA466] to-[#3d8a54] text-white shadow-lg"
+                               : "text-gray-600 hover:text-gray-900 hover:bg-white/80"
+                           }`}
                 >
                   <Icon size={18} className={`transition-transform duration-200 ${
                     activeTab === key ? "scale-110" : "group-hover:scale-105"
@@ -383,6 +404,8 @@ export default function TestDashboard({
                       test={test}
                       onClick={() => window.open(`/test/${test.id}/testbuilder`, "_blank")}
                       onEdit={(t) => handleOpenEdit(t)}
+                      deletingId={deletingId}
+                      handleDelete={handleDelete}
                     />
                   </div>
                 ))
@@ -480,22 +503,19 @@ export default function TestDashboard({
           onCreate={handleCreate}
         />
       )}
-            {/* Edit Test Modal */}
+
+      {/* Edit Test Modal */}
       {isEditModalOpen && editingTest && (
         <EditTestModal
           test={editingTest}
           onClose={handleCloseEdit}
           onUpdate={async (testId, payload) => {
-            // This will be invoked from modal. We call the handleUpdate above.
             try {
               const res = await handleUpdate(testId, payload);
-              // close only on success
               handleCloseEdit();
-              // re-fetch tests by forcing page reset (the fetch effect will run)
               setPage(1);
               return res?.data ? res.data : { success: true };
             } catch (err) {
-              // return err-like object so modal shows message
               return {
                 success: false,
                 message:
@@ -507,7 +527,6 @@ export default function TestDashboard({
           }}
         />
       )}
-
     </div>
   );
 }

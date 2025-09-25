@@ -215,7 +215,54 @@ const handleAssign = async (studentIds) => {
       setUpdating(false);
     }
   };
+const handleSectionDelete = async (sectionId) => {
+  console.log("Dekelteing", sectionId)
+  if (!sectionId) {
+    console.log('ere')
+    showError("No section id provided to delete.");
+    return;
+  }
+  console.log('runnig')
 
+  // confirm UX can be handled in the sidebar modal; this is the action call
+  // setUpdating(true);
+  try {
+    console.log('yes')
+    const res = await privateAxios.delete(`/tests/sections/${sectionId}`);
+
+    const serverData = res?.data ?? res;
+    // expected: response(True, "Section deleted successfully")
+    showSuccess(serverData?.message || "Section deleted.");
+
+    // If we have testId, re-fetch sections from server to keep UI in sync
+    if (testId) {
+      await fetchSections(testId);
+    } else {
+      // fallback: remove from local test state if test is present in memory
+      const updatedTest = {
+        ...test,
+        sections: (test?.sections || []).filter(s => String(s.id) !== String(sectionId))
+      };
+      onTestUpdate(updatedTest);
+      // also update local lists if present
+      setSectionsTimeRestricted(prev => (prev || []).filter(s => String(s.id) !== String(sectionId)));
+      setSectionsOpen(prev => (prev || []).filter(s => String(s.id) !== String(sectionId)));
+    }
+
+    // if deleted section was currently selected, clear selection
+    if (selectedSection && String(selectedSection.id) === String(sectionId)) {
+      setSelectedSection(null);
+    }
+  } catch (err) {
+    console.log('catch')
+    console.error("Error deleting section:", err);
+    const msg = err?.response?.data?.message ?? err?.message ?? "Failed to delete section";
+    showError(`Delete failed: ${msg}`);
+  } finally {
+    console.log('final')
+    setUpdating(false);
+  }
+};
   const handleSectionEdit = async (updatedSection) => {
     if (updatedSection && updatedSection.id && testId) {
       try {
@@ -319,6 +366,8 @@ const handleAssign = async (studentIds) => {
             sections={combinedServerSections.length ? combinedServerSections : (test?.sections || [])}
             selectedSection={selectedSection}
             onSectionSelect={handleSectionSelect}
+              onSectionDelete={handleSectionDelete}         // <-- added prop
+
             onSectionEdit={handleEditSection}
             onAdd={() => setIsAddSectionModalOpen(true)}
             loading={loadingSections}

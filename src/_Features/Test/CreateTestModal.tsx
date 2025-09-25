@@ -10,11 +10,11 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    instructions: "", // required
-    notes: "", // required
+    instructions: "", // optional now
+    notes: "", // optional now
     startDateTime: "",
     endDateTime: "",
-    // duration defaults to 3 hours but is editable now
+    // duration defaults to 3 hours but is editable
     hours: 3,
     minutes: 0,
     seconds: 0,
@@ -24,16 +24,11 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState("");
 
+  // Only name, schedule (start/end) and duration are mandatory
   const validateRequiredFields = () => {
-    const { name, startDateTime, endDateTime, instructions, notes } = formData;
+    const { name, startDateTime, endDateTime } = formData;
     if (!name || !startDateTime || !endDateTime) {
-      return "Please fill required fields (name, start and end).";
-    }
-    if (!instructions || !instructions.trim()) {
-      return "Please provide instructions (required).";
-    }
-    if (!notes || !notes.trim()) {
-      return "Please provide notes (required).";
+      return "Please fill required fields: name, start and end date/time.";
     }
     return null;
   };
@@ -84,9 +79,9 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
       description: formData.description || undefined,
       start_datetime: formData.startDateTime,
       end_datetime: formData.endDateTime,
-      // send both instructions and notes separately
-      instructions: formData.instructions,
-      notes: formData.notes,
+      // instructions and notes are optional now
+      instructions: formData.instructions || undefined,
+      notes: formData.notes || undefined,
       tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
       duration: durationStr,
     };
@@ -296,11 +291,11 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
               />
             </div>
 
-            {/* Instructions */}
+            {/* Instructions (optional) */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                 <BookOpen size={16} className="text-[#4CA466]" />
-                Instructions *
+                Instructions
               </label>
               <textarea
                 name="instructions"
@@ -308,17 +303,16 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
                 onChange={handleChange}
                 rows={4}
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-[#4CA466] resize-none transition-all duration-200"
-                placeholder="Detailed instructions for students (required)"
-                required
+                placeholder="Detailed instructions for students (optional)"
                 disabled={loading}
               />
             </div>
 
-            {/* Notes */}
+            {/* Notes (optional) */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                 <StickyNote size={16} className="text-[#4CA466]" />
-                Notes *
+                Notes
               </label>
               <textarea
                 name="notes"
@@ -326,8 +320,7 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
                 onChange={handleChange}
                 rows={3}
                 className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-[#4CA466] resize-none transition-all duration-200"
-                placeholder="Additional notes for students (required)"
-                required
+                placeholder="Additional notes for students (optional)"
                 disabled={loading}
               />
             </div>
