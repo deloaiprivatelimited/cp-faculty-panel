@@ -1,5 +1,6 @@
 import React, { useEffect, useState } from "react";
 import { X, Clock, Calendar, FileText, Tag, BookOpen, StickyNote } from "lucide-react";
+import { Editor } from "@tinymce/tinymce-react";
 
 interface Test {
   id: string;
@@ -93,6 +94,10 @@ const EditTestModal: React.FC<EditTestModalProps> = ({ test, onClose, onUpdate }
     } else {
       setFormData((p) => ({ ...p, [name]: value }));
     }
+  };
+
+  const handleEditorChange = (content: string) => {
+    setFormData((p) => ({ ...p, instructions: content }));
   };
 
   const formatHMS = (h: number | string, m: number | string, s: number | string) => {
@@ -318,20 +323,32 @@ const EditTestModal: React.FC<EditTestModalProps> = ({ test, onClose, onUpdate }
               />
             </div>
 
-            {/* Instructions */}
+            {/* Instructions (TinyMCE) */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                 <BookOpen size={16} className="text-[#4CA466]" />
                 Instructions
               </label>
-              <textarea
-                name="instructions"
+              <Editor
+                apiKey="3dxds49mb3dhwomdifpyu32irh14nkmz9aj0kjq3s514ytkl"
                 value={formData.instructions}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-[#4CA466] resize-none transition-all duration-200"
-                placeholder="Detailed instructions for students"
-                disabled={loading}
+                init={{
+                  height: 300,
+                  menubar: false,
+                  plugins: [
+                    "advlist autolink lists link charmap preview anchor",
+                    "searchreplace visualblocks code fullscreen",
+                    "insertdatetime table paste help wordcount",
+                  ],
+                  toolbar:
+                    "undo redo | formatselect | " +
+                    "bold italic underline | " +
+                    "alignleft aligncenter alignright alignjustify | " +
+                    "bullist numlist outdent indent | " +
+                    "fullscreen | removeformat | help",
+                  toolbar_mode: "wrap",
+                }}
+                onEditorChange={handleEditorChange}
               />
             </div>
 

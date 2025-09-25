@@ -1,9 +1,9 @@
 import React, { useState } from "react";
 import { X } from "lucide-react";
 import { Editor } from "@tinymce/tinymce-react";
-// import { privateAxios } from "../../utils/axios"; // adjust path
 import { privateAxios } from "../../utils/axios";
-import { showError,showSuccess } from "../../utils/toast";
+import { showError, showSuccess } from "../../utils/toast";
+
 const AddSectionModal = ({ testId, onClose, onAdd }) => {
   const [formData, setFormData] = useState({
     name: "",
@@ -11,6 +11,9 @@ const AddSectionModal = ({ testId, onClose, onAdd }) => {
     instructions: "", // HTML string
     duration: 30,
     isTimeConstrained: true,
+    // new shuffle flags
+    is_shuffle_question: false,
+    is_shuffle_options: false,
   });
   const [loading, setLoading] = useState(false);
 
@@ -25,14 +28,16 @@ const AddSectionModal = ({ testId, onClose, onAdd }) => {
         description: formData.description,
         instructions: formData.instructions,
         time_restricted: !!formData.isTimeConstrained,
-        // you may want to store duration somewhere server-side if applicable
-        duration: formData.duration
+        duration: formData.isTimeConstrained ? formData.duration : undefined,
+        // include shuffle flags
+        is_shuffle_question: !!formData.is_shuffle_question,
+        is_shuffle_options: !!formData.is_shuffle_options,
       };
 
       const res = await privateAxios.post(`/tests/${testId}/sections`, payload);
-      // backend returns section in res.data.data or similar depending on your response wrapper
       const created = res.data?.data || res.data;
-      showSuccess("Section Added Succesfully")
+      showSuccess("Section added successfully");
+      if (onAdd) onAdd(created);
       onClose();
     } catch (err) {
       console.error("Add section failed", err);
@@ -41,7 +46,8 @@ const AddSectionModal = ({ testId, onClose, onAdd }) => {
         err?.response?.data?.error ||
         err?.message ||
         "Failed to create section";
-showError(msg)    } finally {
+      showError(msg);
+    } finally {
       setLoading(false);
     }
   };
@@ -51,7 +57,13 @@ showError(msg)    } finally {
     setFormData((prev) => ({
       ...prev,
       [name]:
-        type === "checkbox" ? checked : type === "number" ? (value === "" ? "" : parseInt(value, 10)) : value,
+        type === "checkbox"
+          ? checked
+          : type === "number"
+          ? value === ""
+            ? ""
+            : parseInt(value, 10)
+          : value,
     }));
   };
 
@@ -147,6 +159,37 @@ showError(msg)    } finally {
               />
             </div>
           )}
+
+          {/* NEW: Shuffle options */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                name="is_shuffle_question"
+                checked={formData.is_shuffle_question}
+                onChange={handleChange}
+                className="w-4 h-4 text-[#4CA466] border-gray-300 rounded"
+              />
+              <div>
+                <div className="text-sm font-medium text-gray-700">Shuffle Questions</div>
+                <div className="text-xs text-gray-500">Randomize order of questions within this section.</div>
+              </div>
+            </label>
+
+            <label className="flex items-center gap-3">
+              <input
+                type="checkbox"
+                name="is_shuffle_options"
+                checked={formData.is_shuffle_options}
+                onChange={handleChange}
+                className="w-4 h-4 text-[#4CA466] border-gray-300 rounded"
+              />
+              <div>
+                <div className="text-sm font-medium text-gray-700">Shuffle Options</div>
+                <div className="text-xs text-gray-500">Randomize options/choices for each question.</div>
+              </div>
+            </label>
+          </div>
 
           <div className="flex justify-end gap-3 pt-4">
             <button type="button" onClick={onClose} className="px-4 py-2 text-gray-700 bg-gray-100 rounded-lg">

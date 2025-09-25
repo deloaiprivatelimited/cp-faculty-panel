@@ -19,6 +19,8 @@ const difficultyBgColors = {
 };
 
 export default function ProblemStatement({ question }: ProblemStatementProps) {
+    console.log("question", question.long_description_markdown)
+
   const copyToClipboard = async (text: string) => {
     try {
       await navigator.clipboard.writeText(text);

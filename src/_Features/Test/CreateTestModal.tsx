@@ -1,5 +1,6 @@
 import React, { useState } from "react";
 import { X, Clock, Calendar, FileText, Tag, BookOpen, StickyNote, Plus } from "lucide-react";
+import { Editor } from "@tinymce/tinymce-react";
 
 interface CreateTestModalProps {
   onClose: () => void;
@@ -10,8 +11,8 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
   const [formData, setFormData] = useState({
     name: "",
     description: "",
-    instructions: "", // optional now
-    notes: "", // optional now
+    instructions: "", // now powered by TinyMCE
+    notes: "", // optional
     startDateTime: "",
     endDateTime: "",
     // duration defaults to 3 hours but is editable
@@ -79,7 +80,7 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
       description: formData.description || undefined,
       start_datetime: formData.startDateTime,
       end_datetime: formData.endDateTime,
-      // instructions and notes are optional now
+      // instructions and notes are optional
       instructions: formData.instructions || undefined,
       notes: formData.notes || undefined,
       tags: formData.tags ? formData.tags.split(",").map((t) => t.trim()).filter(Boolean) : [],
@@ -128,6 +129,10 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
 
     // normal text inputs
     setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleEditorChange = (content: string) => {
+    setFormData((prev) => ({ ...prev, instructions: content }));
   };
 
   const formatHMS = (h: number | string, m: number | string, s: number | string) => {
@@ -291,20 +296,32 @@ const CreateTestModal: React.FC<CreateTestModalProps> = ({ onClose, onCreate }) 
               />
             </div>
 
-            {/* Instructions (optional) */}
+            {/* Instructions (TinyMCE) */}
             <div className="space-y-2">
               <label className="flex items-center gap-2 text-sm font-semibold text-gray-700">
                 <BookOpen size={16} className="text-[#4CA466]" />
                 Instructions
               </label>
-              <textarea
-                name="instructions"
+              <Editor
+                apiKey="3dxds49mb3dhwomdifpyu32irh14nkmz9aj0kjq3s514ytkl"
                 value={formData.instructions}
-                onChange={handleChange}
-                rows={4}
-                className="w-full px-4 py-3 bg-white border border-gray-300 rounded-xl focus:outline-none focus:ring-2 focus:ring-[#4CA466] focus:border-[#4CA466] resize-none transition-all duration-200"
-                placeholder="Detailed instructions for students (optional)"
-                disabled={loading}
+                init={{
+                  height: 300,
+                  menubar: false,
+                  plugins: [
+                    "advlist autolink lists link charmap preview anchor",
+                    "searchreplace visualblocks code fullscreen",
+                    "insertdatetime table paste help wordcount",
+                  ],
+                  toolbar:
+                    "undo redo | formatselect | " +
+                    "bold italic underline | " +
+                    "alignleft aligncenter alignright alignjustify | " +
+                    "bullist numlist outdent indent | " +
+                    "fullscreen | removeformat | help",
+                  toolbar_mode: "wrap",
+                }}
+                onEditorChange={handleEditorChange}
               />
             </div>
 
