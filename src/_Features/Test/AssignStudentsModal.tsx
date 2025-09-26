@@ -61,7 +61,7 @@ const AssignStudentsModal: React.FC<AssignStudentsModalProps> = ({
   const [totalPages, setTotalPages] = useState(1);
   const [total, setTotal] = useState(0);
 
-  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000';
+  const API_BASE_URL = import.meta.env.VITE_API_BASE_URL || 'https://api.backend.careerprep.in';
 
   const getAuthToken = () => {
     return localStorage.getItem('token') || '';
