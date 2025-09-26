@@ -4,6 +4,7 @@ import { useStudentDetailResults } from '../hooks/useStudentDetailResults';
 import { Card, CardHeader, CardContent } from './ui/Card';
 import { Button } from './ui/Button';
 import { Badge } from './ui/Badge';
+import MarkdownRenderer from '../../../utils/MarkDownRender';
 import { ArrowLeft, Clock, Award, CheckCircle, XCircle, Code, List, FileText, ChevronRight, Loader2, AlertCircle } from 'lucide-react';
 
 export const StudentDetailResults: React.FC = () => {
@@ -23,6 +24,7 @@ export const StudentDetailResults: React.FC = () => {
     test_id: testId,
     include_snapshots: true,
   });
+  // console.log(data)
 
   // Extract the first result (assuming one result per student per test)
   const detailedResult = data?.results?.[0];
@@ -166,8 +168,7 @@ const correctSet = new Set(mcq.correct_options);
     return (
     <div className="space-y-4">
 <div>
-<h4 className="font-medium text-gray-900 mb-2">{mcq.title ?? "MCQ"}</h4>
-{mcq.question_text && <p className="text-gray-700 mb-4" dangerouslySetInnerHTML={{ __html: mcq.question_text }} />}
+{mcq.question_text && <MarkdownRenderer text={mcq.question_text}/>}
 </div>
 
 
@@ -194,8 +195,7 @@ isCorrect ? "border-green-500 bg-green-500/10" : isSelected ? "border-red-500 bg
 
 
 <div className="flex-1">
-<div className="text-gray-900">{opt.value}</div>
-<div className="text-xs text-gray-500 mt-1">Option ID: {opt.option_id}</div>
+<div className="text-gray-900"><MarkdownRenderer text={opt.value}/></div>
 </div>
 
 
@@ -212,8 +212,7 @@ isCorrect ? "border-green-500 bg-green-500/10" : isSelected ? "border-red-500 bg
 {mcq.explanation && (
 <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
 <h5 className="font-medium text-gray-900 mb-2">Explanation</h5>
-<p className="text-gray-700">{mcq.explanation}</p>
-</div>
+<MarkdownRenderer text={mcq.explanation}/></div>
 )}
 
 
@@ -230,14 +229,14 @@ isCorrect ? "border-green-500 bg-green-500/10" : isSelected ? "border-red-500 bg
   const renderRearrangeAnswer = (answer: any) => {
     const rearrange = answer.snapshot_rearrange;
     if (!rearrange) return null;
-    console.log(answer)
-    console.log(answer.value)
+    // console.log(answer)
+    // console.log(answer.value)
 const studentOrder: string[] = Array.isArray(answer.value)
 ? (answer.value as string[])
 : (answer.value && typeof answer.value === "object" && Array.isArray((answer.value as any).value))
 ? (answer.value as any).value
 : [];
-console.log(studentOrder)
+// console.log(studentOrder)
 
 // Build a lookup map for item_id -> display value
 const itemMap = new Map<string, string>();
@@ -245,9 +244,7 @@ rearrange.items.forEach((it) => itemMap.set(it.item_id, it.value ?? it.item_id))
     return (
       <div className="space-y-4">
         <div>
-          <h4 className="font-medium text-gray-900 mb-2">{rearrange.title}</h4>
-          <p className="text-gray-700 mb-4">{rearrange.prompt}</p>
-        </div>
+<MarkdownRenderer text={rearrange.prompt}/>        </div>
         
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
           <div>
@@ -319,8 +316,7 @@ isCorrect ? "border-green-500 bg-green-500/10" : "border-red-500 bg-red-500/10"
         {rearrange.explanation && (
           <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
             <h5 className="font-medium text-gray-900 mb-2">Explanation</h5>
-            <p className="text-gray-700">{rearrange.explanation}</p>
-          </div>
+<MarkdownRenderer text={rearrange.explanation}/>          </div>
         )}
       </div>
     );
@@ -328,6 +324,7 @@ isCorrect ? "border-green-500 bg-green-500/10" : "border-red-500 bg-red-500/10"
 
   const renderCodingAnswer = (answer: any) => {
     const coding = answer.snapshot_coding;
+    console.log(answer)
     if (!coding) return null;
 
     return (
@@ -344,34 +341,12 @@ isCorrect ? "border-green-500 bg-green-500/10" : "border-red-500 bg-red-500/10"
               <Badge variant="default">{answer.value.language}</Badge>
             </div>
             <pre className="text-gray-100 text-sm overflow-x-auto">
-              <code>{answer.value.code}</code>
+              <code>{answer.value.source_code}</code>
             </pre>
           </div>
         </div>
         
-        <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h5 className="font-medium text-gray-900 mb-2">Sample Input/Output</h5>
-            <div className="space-y-2">
-              {coding.sample_io.map((io: any, index: number) => (
-                <div key={index} className="text-sm">
-                  <div className="text-gray-500">Input: <span className="text-gray-700 font-mono">{io.input}</span></div>
-                  <div className="text-gray-500">Output: <span className="text-gray-700 font-mono">{io.output}</span></div>
-                  {index < coding.sample_io.length - 1 && <hr className="border-gray-200 my-2" />}
-                </div>
-              ))}
-            </div>
-          </div>
-          
-          <div className="bg-gray-50 border border-gray-200 rounded-lg p-4">
-            <h5 className="font-medium text-gray-900 mb-2">Problem Details</h5>
-            <div className="space-y-2 text-sm">
-              <div className="text-gray-500">Max Marks: <span className="text-gray-900">{coding.marks}</span></div>
-              <div className="text-gray-500">Negative Marks: <span className="text-gray-900">{coding.negative_marks}</span></div>
-              <div className="text-gray-500">Languages: <span className="text-gray-700">{coding.allowed_languages.join(', ')}</span></div>
-            </div>
-          </div>
-        </div>
+    
       </div>
     );
   };
@@ -389,11 +364,13 @@ isCorrect ? "border-green-500 bg-green-500/10" : "border-red-500 bg-red-500/10"
     }
   };
 
+
   return (
-    <div className="min-h-screen bg-gray-50 flex">
-      {/* Sidebar */}
-      <div className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-sm">
-        <div className="p-6 border-b border-gray-200">
+    <div className="min-h-screen bg-gray-50">
+      {/* Sidebar (fixed) */}
+      <div className="w-80 bg-white border-r border-gray-200 flex flex-col shadow-sm h-screen fixed top-0 left-0 z-20">
+        {/* Sidebar header (fixed, not scrollable) */}
+        <div className="p-6 border-b border-gray-200 flex-shrink-0">
           <Button 
             variant="outline" 
             onClick={() => navigate(`/test/results/${testId}`)}
@@ -424,7 +401,8 @@ isCorrect ? "border-green-500 bg-green-500/10" : "border-red-500 bg-red-500/10"
           </div>
         </div>
 
-        <div className="flex-1 overflow-y-auto">
+        {/* Sidebar content (scrollable) */}
+        <div className="flex-1 overflow-y-auto min-h-0">
           <div className="p-4">
             <h3 className="text-sm font-medium text-gray-500 mb-3 uppercase tracking-wide">Test Sections</h3>
             <div className="space-y-2">
@@ -467,8 +445,8 @@ isCorrect ? "border-green-500 bg-green-500/10" : "border-red-500 bg-red-500/10"
         </div>
       </div>
 
-      {/* Main Content */}
-      <div className="flex-1 overflow-y-auto">
+      {/* Main Content (scrollable, with left margin) */}
+      <div className="ml-80 min-h-screen">
         <div className="p-6">
           {/* Header */}
           <div className="mb-6">

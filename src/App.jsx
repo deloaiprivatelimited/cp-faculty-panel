@@ -46,7 +46,9 @@ const Layout = ({ children }) => {
   const hideSidebarPatterns = [
     /^\/test\/[^/]+\/testbuilder$/,                 // TestBuilder
     /^\/questions\/coding\/[^/]+\/code-builder$/,   // CodeBuilder
-    /^\/[^/]+\/[^/]+\/preview$/                     // CodeRunner
+    /^\/[^/]+\/[^/]+\/preview$/     ,
+        /^\/student\/[^/]+\/results$/                   // Student results (e.g. /student/123/results)
+                // CodeRunner
   ];
 
   const shouldHideSidebar =
@@ -89,7 +91,7 @@ function App() {
           }
       };
   
-      fetchQuestions();
+      // fetchQuestions();
   
     }, []);
   

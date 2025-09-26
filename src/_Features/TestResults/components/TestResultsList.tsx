@@ -6,6 +6,9 @@ import { Card, CardHeader, CardContent } from "./ui/Card";
 import { Button } from "./ui/Button";
 import { Badge } from "./ui/Badge";
 import { SearchInput } from "./ui/SearchInput";
+import * as XLSX from "xlsx";
+import { saveAs } from "file-saver";
+
 import {
   Eye,
   Users,
@@ -102,7 +105,47 @@ export const TestResultsList: React.FC = () => {
 
   // pull telemetry summaries safe
   const tabsSummary = data?.tabs_summary;
-  const violationSummary = data?.violation_summary;
+
+  // helper: robust telemetry extractors (reuse in rendering if needed)
+  const extractFullScreen = (raw: any) =>
+    !!(raw.full_screen ?? raw.fullscreen_violated ?? raw.is_fullscreen ?? false);
+  console.log(extractFullScreen)
+
+  const extractTabSwitchCount = (raw: any) => {
+    // numeric canonical fields first
+    if (typeof raw.tab_switch_count === "number") return raw.tab_switch_count;
+    if (typeof raw.tab_switches_count === "number")
+      return raw.tab_switches_count;
+    // list-shaped fallbacks
+    if (Array.isArray(raw.tab_switches)) return raw.tab_switches.length;
+    if (Array.isArray(raw.tab_focus_events)) return raw.tab_focus_events.length;
+    if (Array.isArray(raw.tabs)) return raw.tabs.length;
+    return 0;
+  };
+const handleDownloadExcel = () => {
+  if (!filteredAndSortedResults.length) return;
+
+  // Prepare clean data for export
+  const exportData = filteredAndSortedResults.map((r) => ({
+    Name: r.student?.name || "Unknown",
+    Email: r.student?.email || "Unknown",
+    Score: `${r.total_marks.toFixed(1)} / ${r.max_marks}`,
+    Status: r.submitted ? "Submitted" : "In Progress",
+    "Submitted At": formatDate(r.submitted_at),
+    "Fullscreen Violation": extractFullScreen(r) ? "Yes" : "No",
+    "Tab Switches": extractTabSwitchCount(r),
+  }));
+
+  // Create worksheet and workbook
+  const worksheet = XLSX.utils.json_to_sheet(exportData);
+  const workbook = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(workbook, worksheet, "Results");
+
+  // Generate buffer and save as file
+  const excelBuffer = XLSX.write(workbook, { bookType: "xlsx", type: "array" });
+  const blob = new Blob([excelBuffer], { type: "application/octet-stream" });
+  saveAs(blob, `test_results_${testId || "data"}.xlsx`);
+};
 
   return (
     <div className="min-h-screen bg-gray-50 p-6">
@@ -123,6 +166,15 @@ export const TestResultsList: React.FC = () => {
             >
               {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : "Refresh"}
             </Button>
+            <Button
+  size="sm"
+  variant="outline"
+  onClick={handleDownloadExcel}
+  className="flex items-center gap-2"
+>
+  Download Excel
+</Button>
+
           </div>
 
           {error && (
@@ -133,7 +185,7 @@ export const TestResultsList: React.FC = () => {
           )}
 
           {/* Test Stats */}
-          <div className="grid grid-cols-1 md:grid-cols-6 gap-4 mb-6">
+          <div className="grid grid-cols-1 md:grid-cols-5 gap-4 mb-6">
             <Card>
               <CardContent className="flex items-center justify-between p-4">
                 <div>
@@ -188,37 +240,15 @@ export const TestResultsList: React.FC = () => {
               </CardContent>
             </Card>
 
-            {/* Violation summary card */}
-            <Card>
-              <CardContent className="p-4">
-                <p className="text-gray-500 text-sm">Violations</p>
-                <div className="flex items-center justify-between mt-2">
-                  <div>
-                    <p className="text-lg font-semibold">
-                      {violationSummary ? violationSummary.total_violations : 0}
-                    </p>
-                    <p className="text-xs text-gray-500">
-                      {violationSummary
-                        ? `${violationSummary.attempts_with_violations} attempts`
-                        : "—"}
-                    </p>
-                  </div>
-                  <AlertCircle className="w-6 h-6 text-[#D9534F]" />
-                </div>
-              </CardContent>
-            </Card>
-
-            {/* optional placeholder - monitor / fullscreen KPI */}
+            {/* placeholder - monitor / fullscreen KPI */}
             <Card>
               <CardContent className="p-4">
                 <p className="text-gray-500 text-sm">Fullscreen used</p>
                 <div className="flex items-center justify-between mt-2">
                   <div>
-                    {/* compute attempts using fullscreen if we have summary; else show dash */}
                     <p className="text-lg font-semibold">
-                      {/* best-effort: if tabs_summary exists, we can't infer fullscreen count — fallback to dash */}
                       {data?.results
-                        ? data.results.filter((r) => !!r.full_screen).length
+                        ? data.results.filter((r) => extractFullScreen(r)).length
                         : "—"}
                     </p>
                     <p className="text-xs text-gray-500">attempts</p>
@@ -227,6 +257,9 @@ export const TestResultsList: React.FC = () => {
                 </div>
               </CardContent>
             </Card>
+
+            {/* small empty placeholder to keep grid layout consistent */}
+            <div />
           </div>
         </div>
 
@@ -315,9 +348,6 @@ export const TestResultsList: React.FC = () => {
                     <th className="text-left text-gray-600 font-medium py-3 px-6">
                       Tabs
                     </th>
-                    <th className="text-left text-gray-600 font-medium py-3 px-6">
-                      Violations
-                    </th>
 
                     <th className="text-left text-gray-600 font-medium py-3 px-6">
                       Actions
@@ -326,29 +356,9 @@ export const TestResultsList: React.FC = () => {
                 </thead>
                 <tbody>
                   {filteredAndSortedResults.map((result) => {
-                    // defensive access to telemetry
-                    const fullScreen = !!(result as any).full_screen;
-                    const tabSwitchCount =
-                      typeof (result as any).tab_switch_count === "number"
-                        ? (result as any).tab_switch_count
-                        : 0;
-                    const violationCount =
-                      typeof (result as any).violation_count === "number"
-                        ? (result as any).violation_count
-                        : // if backend returns `violations` array, use len
-                          Array.isArray((result as any).violations)
-                        ? (result as any).violations.length
-                        : 0;
-                    const violationsPreview =
-                      Array.isArray((result as any).violations) &&
-                      (result as any).violations.length > 0
-                        ? (result as any).violations
-                            .slice(0, 2)
-                            .map((v: any) =>
-                              typeof v === "string" ? v : JSON.stringify(v)
-                            )
-                            .join(", ")
-                        : "";
+                    // defensive access to telemetry with fallbacks
+                    const fullScreen = extractFullScreen(result);
+                    const tabSwitchCount = extractTabSwitchCount(result);
 
                     return (
                       <tr
@@ -383,38 +393,27 @@ export const TestResultsList: React.FC = () => {
                         </td>
 
                         {/* Fullscreen */}
-                        <td className="py-4 px-6">
-                          {fullScreen ? (
-                            <span className="inline-flex items-center gap-2 text-sm text-green-600">
-                              <Monitor className="w-4 h-4" />
-                              Full
-                            </span>
-                          ) : (
-                            <span className="inline-flex items-center gap-2 text-sm text-gray-500">
-                              <EyeOff className="w-4 h-4" />
-                              —
-                            </span>
-                          )}
-                        </td>
+                     {/* Fullscreen */}
+<td className="py-4 px-6">
+  {fullScreen ? (
+    <span className="inline-flex items-center gap-2 text-sm text-red-600">
+      <Monitor className="w-4 h-4" />
+      Violation
+    </span>
+  ) : (
+    <span className="inline-flex items-center gap-2 text-sm text-gray-500">
+      <EyeOff className="w-4 h-4" />
+      No violation
+    </span>
+  )}
+</td>
+
 
                         {/* Tab switch count */}
                         <td className="py-4 px-6 text-gray-700">
                           <div className="flex items-center gap-2">
                             <div className="font-semibold">{tabSwitchCount}</div>
                             <div className="text-xs text-gray-400">tabs</div>
-                          </div>
-                        </td>
-
-                        {/* Violations */}
-                        <td className="py-4 px-6">
-                          <div className="flex items-center gap-2">
-                            <AlertCircle className="w-4 h-4 text-[#D9534F]" />
-                            <div>
-                              <div className="font-semibold">{violationCount}</div>
-                              <div className="text-xs text-gray-400">
-                                {violationsPreview ? violationsPreview : "—"}
-                              </div>
-                            </div>
                           </div>
                         </td>
 

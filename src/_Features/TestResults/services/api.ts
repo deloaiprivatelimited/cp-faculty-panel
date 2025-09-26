@@ -15,14 +15,11 @@ export interface Student {
 }
 
 /**
- * Per-attempt telemetry/violation shape.
- * Keep `any` for violations entries because shape may vary (string, object, etc).
+ * Per-attempt telemetry shape (only full-screen + tab-switches now).
  */
 export interface AttemptTelemetry {
   full_screen: boolean;
   tab_switch_count: number;
-  violations: any[]; // shape depends on backend; adjust if you have stricter shape
-  violation_count: number;
 }
 
 export interface TestResult {
@@ -37,11 +34,9 @@ export interface TestResult {
   submitted_at: string | null;
   last_autosave: string | null;
 
-  // new telemetry fields
+  // telemetry fields (only these two)
   full_screen?: boolean;
   tab_switch_count?: number;
-  violations?: any[];
-  violation_count?: number;
 }
 
 export interface TestMeta {
@@ -115,15 +110,13 @@ export interface DetailedResult extends TestResult {
   timed_section_answers: SectionAnswers[];
   open_section_answers: SectionAnswers[];
 
-  // include telemetry too (optional)
+  // telemetry kept here as well (optional)
   full_screen?: boolean;
   tab_switch_count?: number;
-  violations?: any[];
-  violation_count?: number;
 }
 
 /**
- * Summaries returned by backend for UI tabs/violations counts
+ * Summaries returned by backend for UI tabs counts
  */
 export interface TabsSummary {
   total_tab_switches: number;
@@ -133,11 +126,7 @@ export interface TabsSummary {
   attempts_with_tab_switches_percent: number;
 }
 
-export interface ViolationSummary {
-  total_violations: number;
-  attempts_with_violations: number;
-  attempts_with_violations_percent: number;
-}
+// NOTE: ViolationSummary removed — backend no longer returns violations
 
 export interface TestResultsListResponse {
   test?: TestMeta; // optional test meta object returned by backend
@@ -146,9 +135,8 @@ export interface TestResultsListResponse {
   limit: number;
   offset: number;
 
-  // new top-level summaries
+  // top-level tabs summary (violations removed)
   tabs_summary?: TabsSummary;
-  violation_summary?: ViolationSummary;
 }
 
 export interface StudentDetailResponse {
@@ -159,9 +147,8 @@ export interface StudentDetailResponse {
   limit: number;
   offset: number;
 
-  // also include summaries at student-level if backend returns them
+  // student-level summaries (only tabs now)
   tabs_summary?: TabsSummary;
-  violation_summary?: ViolationSummary;
 }
 
 class ApiService {
