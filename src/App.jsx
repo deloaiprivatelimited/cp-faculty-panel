@@ -1,6 +1,6 @@
 // src/App.jsx
 import React ,{useEffect} from "react";
-import { BrowserRouter as Router, Routes, Route, Navigate } from "react-router-dom";
+import { BrowserRouter as Router, Routes, Route, Navigate, Form } from "react-router-dom";
 import BulkUploadPage from "./_Features/Students/AddStudents/Bulk/BulkUploadPage";
 import Login from "./_Features/Auth/Login";
 import ResetPassword from "./_Features/Auth/ResetPassword";
@@ -35,7 +35,7 @@ import EditRearrangeBuilder from "./_Features/MyQuestions/Questions/Rearrange/Ed
 import RearrangeBuilder from "./_Features/MyQuestions/Questions/Rearrange/RearrangeBuilder"
 import { TestResultsList } from './_Features/TestResults/components/TestResultsList.tsx';
 import { StudentDetailResults } from './_Features/TestResults/components/StudentDetailResults.tsx';
-
+import FormBuilder from "./_Features/ProfileBuilder/index.tsx";
 const Layout = ({ children }) => {
   const location = useLocation();
   const path = location.pathname;
@@ -227,6 +227,14 @@ function App() {
               element={
                 <ProtectedRoute>
                   <StudentList/>
+                </ProtectedRoute>
+              }
+            />
+              <Route
+              path="/students/profile/builder"
+              element={
+                <ProtectedRoute>
+                  <FormBuilder/>
                 </ProtectedRoute>
               }
             />
