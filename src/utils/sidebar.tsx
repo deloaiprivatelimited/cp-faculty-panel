@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Users, FileText, Globe, HelpCircle, LogOut } from "lucide-react";
+import { Users, FileText, Globe, HelpCircle, LogOut,LayoutTemplate } from "lucide-react";
 import { useAuth } from "../_Features/Auth/AuthContext";
 import { useNavigate, useLocation } from "react-router-dom";
 
@@ -35,6 +35,8 @@ const Sidebar: React.FC = () => {
   const navItems: NavItem[] = [
     { label: "Students", icon: <Users />, path: "/students" },
     { label: "Test", icon: <FileText />, path: "/test" },
+        { label: "Profile", icon: <LayoutTemplate />, path: "/students/profile/builder" }, // <-- ADDED
+
     {
       label: "Global",
       icon: <Globe />,

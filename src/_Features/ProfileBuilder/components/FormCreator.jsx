@@ -1,11 +1,19 @@
+import React from 'react';
+
 import { useState ,useEffect} from 'react';
 import { FormBuilder } from '../utils/FormBuilder';
 import { Plus, Trash2, Eye, GripVertical, ChevronDown, ChevronUp, ChevronLeft, ChevronRight } from 'lucide-react';
+import HeaderWrapper from '../../../utils/HeaderWrapper';
+import FooterWrapper from '../../../utils/FooterWrapper';
+import { privateAxios } from '../../../utils/axios';
+import { showError,showSuccess } from '../../../utils/toast';
 
 export function FormCreator({ onFormGenerated,formData }) {
   const [formTitle, setFormTitle] = useState('Student Placement Profile');
   const [formDescription, setFormDescription] = useState('Please complete this form to create your student placement profile. The information you provide will help the placement team understand your academic background, skills, and interests, and connect you with suitable opportunities. You may be asked to share your resume, academic scores, certifications, and other relevant details. Ensure that all information is accurate and updated.');
   const [currentPage, setCurrentPage] = useState(0);
+   const [isOpen, setIsOpen] = useState(false);
+  const [toggleBusy, setToggleBusy] = useState(false);
   const [sections, setSections] = useState([
     {
       id: generateId(),
@@ -23,6 +31,7 @@ export function FormCreator({ onFormGenerated,formData }) {
     if (formData) {
       setFormTitle(formData.title || 'Student Placement Profile');
       setFormDescription(formData.description || '');
+      setIsOpen(Boolean(formData.open))
       if (formData.sections && Array.isArray(formData.sections)) {
         // Ensure all sections and fields have IDs
         const withIds = formData.sections.map((s) => ({
@@ -58,6 +67,55 @@ export function FormCreator({ onFormGenerated,formData }) {
       }
     }
   };
+const toggleOpen = async () => {
+  if (toggleBusy) return;
+  setToggleBusy(true);
+
+  try {
+    // axios will throw for non-2xx by default, so we just await the request
+    const res = await privateAxios.patch('/faculty/student/profile/form/forms/toggle_open');
+
+    // axios response body is in res.data
+    const body = res && res.data ? res.data : null;
+    console.log(body)
+
+    if (!body) {
+      showError('Toggle failed', 'Empty response from server');
+      return;
+    }
+
+    // optionally handle API-level success flag
+    if (typeof body.success !== 'undefined' && !body.success) {
+      showError('Toggle failed', body.message || 'Unknown error');
+      return;
+    }
+
+    // new open state should be in body.data.open per your backend
+    const newOpen = body.data && typeof body.data.open !== 'undefined'
+      ? Boolean(body.data.open)
+      : // fallback: if backend didn't return open, toggle locally
+        !isOpen;
+
+    setIsOpen(newOpen);
+    // show success feedback if you have it
+    if (body.message) showSuccess?.(body.message);
+
+  } catch (err) {
+    console.log('errer',err)
+    // axios error shape: err.response (server returned non-2xx), err.request (no response), or generic
+    if (err.response && err.response.data) {
+      const serverMsg = err.response.data.message || JSON.stringify(err.response.data);
+      showError('Toggle failed', serverMsg);
+    } else if (err.request) {
+      showError('Toggle failed', 'No response from server. Check your network or backend.');
+    } else {
+      showError('Toggle failed', err.message || String(err));
+    }
+  } finally {
+    setToggleBusy(false);
+  }
+};
+
 
   const handleNextPage = () => {
     if (currentPage < sections.length - 1) {
@@ -364,12 +422,46 @@ export function FormCreator({ onFormGenerated,formData }) {
   return (
     <div className="min-h-screen bg-white py-12 px-6">
       <div className="max-w-6xl mx-auto">
-        <div className="mb-8">
-          <h1 className="text-4xl font-bold text-[#1E1E1E] mb-2">Student Placemet Profile Builder</h1>
-          <p className="text-lg text-[#666666]">Build your custom form with drag-and-drop simplicity</p>
-        </div>
+   {/* Replace your existing <HeaderWrapper> ... </HeaderWrapper> with this */}
+<HeaderWrapper>
+  <div className="w-full flex flex-col md:flex-row items-start md:items-center justify-between gap-4 mb-8">
+    {/* Left: title + subtitle */}
+    <div className="min-w-0">
+      <h1 className="text-4xl font-bold text-[#1E1E1E] mb-2">Student Placement Profile Builder</h1>
+      <p className="text-lg text-[#666666]">Build your custom form with drag-and-drop simplicity</p>
+    </div>
 
-        <div className="bg-[#F5F5F5] border border-[#DDDDDD] rounded-lg p-8 mb-6">
+    {/* Right: Save button (aligned to top-right on larger screens) */}
+      {/* Right: Save button + Open toggle */}
+    <div className="flex items-start md:items-center gap-3">
+      <button
+        onClick={generateForm}
+        className="flex items-center gap-2 px-6 py-3 bg-[#4CA466] text-white rounded-lg font-medium hover:bg-[#3d8a52] transition-colors"
+      >
+        <Eye className="w-5 h-5" />
+        Save Form
+      </button>
+
+      <button
+        onClick={toggleOpen}
+        disabled={toggleBusy}
+        className={`flex items-center gap-2 px-4 py-3 rounded-lg font-medium transition-colors border ${
+          isOpen
+            ? 'bg-white border-[#4CA466] text-[#4CA466] hover:bg-[#f0fff4]'
+            : 'bg-white border-[#DDDDDD] text-[#666666] hover:bg-[#F5F5F5]'
+        }`}
+        title={isOpen ? 'Click to close the form (no further submissions)' : 'Click to open the form (allow submissions)'}
+      >
+        {/* simple visual: text + small indicator */}
+        <span className={`w-2 h-2 rounded-full ${isOpen ? 'bg-[#4CA466]' : 'bg-[#DDDDDD]'}`} />
+        <span className="text-sm">{isOpen ? 'Open' : 'Closed'}</span>
+      </button>
+    </div>
+
+  </div>
+</HeaderWrapper>
+
+    <div className="bg-[#F5F5F5] border border-[#DDDDDD] rounded-lg p-8 mb-6">
           <div className="space-y-4 mb-6">
             <div>
               <label className="block text-[#1E1E1E] font-medium mb-2">Form Title</label>
@@ -393,7 +485,6 @@ export function FormCreator({ onFormGenerated,formData }) {
             </div>
           </div>
         </div>
-
         {sections.length > 1 && (
           <div className="mb-6">
             <div className="flex justify-between items-center mb-4">
@@ -437,7 +528,8 @@ export function FormCreator({ onFormGenerated,formData }) {
           }
         />
 
-        <div className="flex justify-between items-center gap-4 mt-6">
+      <FooterWrapper>
+          <div className="flex justify-between items-center gap-4 mt-6">
           <button
             onClick={handlePreviousPage}
             disabled={currentPage === 0}
@@ -456,13 +548,7 @@ export function FormCreator({ onFormGenerated,formData }) {
               Add Section
             </button>
 
-            <button
-              onClick={generateForm}
-              className="flex items-center gap-2 px-8 py-3 bg-[#4CA466] text-white rounded-lg font-medium hover:bg-[#3d8a52] transition-colors"
-            >
-              <Eye className="w-5 h-5" />
-              Preview Form
-            </button>
+       
           </div>
 
           <button
@@ -474,6 +560,7 @@ export function FormCreator({ onFormGenerated,formData }) {
             <ChevronRight className="w-5 h-5" />
           </button>
         </div>
+      </FooterWrapper>
       </div>
     </div>
   );

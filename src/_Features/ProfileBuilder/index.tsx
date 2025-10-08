@@ -51,8 +51,8 @@ const handleFormGenerated = async (form: Form) => {
       form
     );
 
-    console.log("Form created successfully:", response.data);
-    showSuccess(`Form created with ID: ${response.data?.data?.id}`);
+     showSuccess("Form Updated successfully:");
+    // showSuccess(`Form created with ID: ${response.data?.data?.id}`);
     // setShowPreview(true);
   } catch (error: any) {
     if (error.response) {
